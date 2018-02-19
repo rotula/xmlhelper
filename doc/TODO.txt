@@ -1,0 +1,24 @@
+****
+TODO
+****
+
+- Deal with comments and processing instructions. This is only partly
+  done by now. ``count_characters`` and ``get_text`` work correctly.
+
+- Documentation: So far you can create an HTML documentation with
+  epydoc.
+
+- insert_at() does not give a useful error message, when you try to
+  insert something at an index position greater than the respective
+  string length. But it returns a defined error value which might be
+  even better.
+
+- A more efficient implementation of ``cut`` is desperately needed
+  as we use far too many xpath expressions.
+  
+- Maybe a function that inserts an element at the very end of the
+  content of a given tag (either at the end of the text, if the
+  element has no children, or at the end of the tail of the last
+  child element).
+
+.. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:

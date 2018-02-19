@@ -1,0 +1,188 @@
+*************************
+Changelog for XMLservices
+*************************
+
+0.17.0
+======
+
+Added TextNode.
+
+Be more flexible with appending lists in Transformer.
+
+0.16.0
+======
+
+Added basic infrastructure for transformations (``xmlhelper.Transformer``).
+
+0.15.7
+======
+
+Made the module compatible with Python 2 and 3.
+
+Added requirement ``lxml`` to ``setup.py``.
+
+0.15.6
+======
+
+Namespaces dict cleaned, added two more namespaces from the MS Office
+realm.
+
+0.15.5
+======
+
+Added some documentation.
+
+Added test for ``PrecedingIterator``.
+
+Added ``verbose`` option for doctests.
+
+Rewrite of ``get_t_struct`` as generator.
+
+Code cleanup and additional tests to get better
+coverage values. Coverage is now 99%. The only
+thing missing is proper testing of ``goto_next_char``.
+
+0.15.4
+======
+
+MGH and dMGH namespaces.
+
+0.15.3
+======
+
+Yet even more namespaces (Microsoft Office).
+
+0.15.2
+======
+
+Some more namespaces.
+
+0.15.1
+======
+
+Addition of some namespaces.
+
+0.15.0
+======
+
+New: Started a namespace dictionary with the most commonly used
+namespaces.
+
+New: Added an Indenter that does some pretty printing (experimental).
+
+0.14.1
+======
+
+Bugfix: ``lstrip`` did not work properly (issues with ``skip_els``
+and with looping over subelements). As ``strip`` calls ``lstrip``,
+it was affected, too.
+
+0.14.0
+======
+
+Added FollowingIterator to loop over following axis of given element.
+
+0.13.1
+======
+
+Bugfix: ``split`` did not place the tail of the parent properly.
+
+0.13.0
+======
+
+``lstrip`` and ``strip``
+
+0.12.0
+======
+
+Delete attribute.
+
+0.11.0
+======
+
+complete rewrite of the notoriously problematic ``goto`` function
+(The old implementation is still available, called ``goto2`` for the time being,
+but this is not part of the API.)
+
+0.10.0
+======
+
+Implemented ``get_xpath_index`` and ``get_xpath``.
+
+0.9.0
+=====
+
+Implemented ``split``.
+
+0.8.0
+=====
+
+Create ``copy`` of elements. 
+
+0.7.1
+=====
+
+``span`` also accepts one element, wraps a ``span`` around given element
+
+0.7.0
+=====
+
+New feature: ``span``.
+
+0.6.0
+=====
+
+New features: ``wrap``, ``collect``, ``cut_element``.
+
+0.5.1
+=====
+
+Added some required metadata.
+Corrected error in MANIFEST.in.
+
+0.5.0
+=====
+
+New features: ``move_element``, ``move_element_to_pos``, and
+``move_element_to_textpos``.
+
+0.4.1
+=====
+
+Implemented ``skip_els`` for ``rstrip``.
+
+Minor adjustments in doctests.
+
+0.4.0
+=====
+
+Re-implemented ``goto`` from scratch and re-enabled ``insert_at``.
+
+0.3.0
+=====
+
+New feature: ``rstrip(el)``
+
+Temporarily removed the faulty ``goto`` (and as a consequence
+of this temporarily removed ``insert_at``).
+
+0.2.0
+=====
+
+New feature: ``cut(from_el, to_el)``
+
+0.1.1
+=====
+
+Bugfix release
+
+- deal with comments and processing instructions in ``get_text``
+- deal with comments and processing instructions in ``count_characters``
+- add ``__version__`` and ``__author__`` to module
+
+0.1
+===
+
+Initial release including tests
+
+.. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:

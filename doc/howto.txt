@@ -1,0 +1,65 @@
+******
+HOWTOs
+******
+
+Building, distributing, and installing
+======================================
+
+Build it::
+
+    python setup.py build
+
+Generic distribution::
+
+    python setup.py sdist
+
+Windows distribution::
+
+    python setup.py bdist_wininst
+
+Installing::
+
+    python setup.py install
+
+Documentation
+=============
+
+Complete HTML documentation inside the ``doc`` directory::
+
+    python make_htmldoc.py
+
+This creates the ``html`` directory inside ``doc``. It needs epydoc and
+docutils. It creates the module documentation and also an HTML version
+of the doctests. You need to supply a file ``make_htmldoc_config.py``
+inside the ``doc`` directory. In this file you have to set the following
+variables:
+
+``epydocpath``
+    Path to epydoc executable script
+
+``targetdir``
+    Target directory for the html documentation. Should point to the
+    ``html`` subdirectory of ``doc``.
+
+``objects``
+    The python objects to create documentation for. So far just the path
+    to ``xmlhelper.py``.
+
+``doctestfile``
+    Path to ``test/test_xmlhelper.txt``.
+
+``doctesttarget``
+    Target directory for the html version of the doctest file.
+
+``doctestcsslink``
+    where to find the epydoc.css file from ``doctesttarget``.
+
+NB: The current version of epydoc (3.0.1) has incompatibilities with the
+    latest docutils versions. Therefore, the epydoc installation has to
+    be patched. See
+    <http://www.mail-archive.com/debian-bugs-dist@lists.debian.org/msg728298.html>
+    or
+    <http://groups.google.com/group/pyglet-commits/browse_thread/thread/e2e9556bcb75f05e?pli=1>
+    for details.
+
+.. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:

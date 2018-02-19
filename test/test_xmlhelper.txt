@@ -1,0 +1,1217 @@
+**********************
+Tests for xmlhelper.py
+**********************
+
+1. Buildup and version test
+===========================
+
+>>> import lxml.etree as et
+>>> import xmlhelper
+
+Set up a helper function for comparison of string representations.
+Taken from
+<http://python3porting.com/problems.html#string-representation>.
+
+>>> def bprint(s):
+...     if not isinstance(s, str):
+...         s = s.decode()
+...     print(s)
+>>> xmlhelper.__version__
+'0.17.0'
+
+2. get_text(el, skip_els, repl)
+===============================
+
+``get_text`` returns only the text content of an xml element and its
+subelements:
+
+>>> doc = et.fromstring("<text>This<sup>1</sup> <em>is</em> text.</text>")
+>>> xmlhelper.get_text(doc)
+'This1 is text.'
+
+You can skip certain elements:
+
+>>> xmlhelper.get_text(doc, ["sup"])
+'This is text.'
+
+If it is only one element you want to skip, you can just
+pass a string:
+
+>>> xmlhelper.get_text(doc, "sup")
+'This is text.'
+
+If you want a replacement string for the skipped element, this
+is possible, too:
+
+>>> xmlhelper.get_text(doc, ["em"], ["???"])
+'This1 ??? text.'
+
+>>> xmlhelper.get_text(doc, ["em", "sup"], ["...", ""])
+'This ... text.'
+
+If it is only one element you want to replace, you can just
+pass a string:
+
+>>> xmlhelper.get_text(doc, "em", "???")
+'This1 ??? text.'
+
+Whitespaces are preserved just the way they appear within the xml:
+
+>>> doc = et.fromstring("<text>This \n<em>is</em> \ttext.</text>")
+>>> xmlhelper.get_text(doc)
+'This \nis \ttext.'
+
+You can skip all subelements:
+
+>>> doc = et.fromstring("<text>This<sup>1</sup> <em>is</em> text.</text>")
+>>> xmlhelper.get_text(doc, "*")
+'This  text.'
+
+Comments and processing instructions should be skipped:
+
+>>> doc = et.fromstring("<text>ab<!-- comment -->cde<?xyz ?>fgh</text>")
+>>> xmlhelper.get_text(doc)
+'abcdefgh'
+
+3. delete(el)
+=============
+
+With ``delelete`` you can remove an element from the ElementTree without
+losing its tail text.
+
+>>> doc = et.fromstring("<text>This<sup>1</sup> <em>is</em> text.</text>")
+>>> element = doc.find("sup")
+>>> xmlhelper.delete(element)
+>>> bprint(et.tostring(doc))
+<text>This <em>is</em> text.</text>
+
+>>> doc = et.fromstring("<text>This<sup>1</sup> <em>is</em> text.</text>")
+>>> element = doc.find("em")
+>>> xmlhelper.delete(element)
+>>> bprint(et.tostring(doc))
+<text>This<sup>1</sup>  text.</text>
+
+>>> doc = et.fromstring("<text>This<sup>1</sup> <em>is</em> text.</text>")
+>>> xmlhelper.delete(doc)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Cannot delete root element.
+
+>>> doc = et.fromstring("<text>This<milestone/> <em>is</em> text.</text>")
+>>> element = doc.find("milestone")
+>>> xmlhelper.delete(element)
+>>> bprint(et.tostring(doc))
+<text>This <em>is</em> text.</text>
+
+>>> doc = et.fromstring("<text>This <em>is</em> text.<milestone/></text>")
+>>> element = doc.find("milestone")
+>>> xmlhelper.delete(element)
+>>> bprint(et.tostring(doc))
+<text>This <em>is</em> text.</text>
+
+4. count_characters(el, skip_els=[])
+====================================
+
+>>> doc = et.fromstring("<text>This<milestone/> <em>is</em> text.</text>")
+>>> xmlhelper.count_characters(doc)
+13
+
+>>> xmlhelper.count_characters(doc, "*")
+11
+
+>>> xmlhelper.count_characters(doc, "milestone")
+13
+
+>>> xmlhelper.count_characters(doc, "em")
+11
+
+>>> doc = et.fromstring("<text>This<milestone/>"\
+... " <em1><em2>is</em2></em1> text.</text>")
+
+>>> xmlhelper.count_characters(doc, "em2")
+11
+
+>>> doc = et.fromstring("<text>ab<!-- comment -->cde<?xyz ?>fgh</text>")
+>>> xmlhelper.count_characters(doc)
+8
+
+5. goto(el, pos)
+================
+
+In ElementTree text content is not stored as a node of its own but
+either as ``text`` of an element or as ``tail`` of an element. Thus
+when you want to address a certain position in the textual content
+of a document you generally have to specify three things: the element
+itself, whether we are talking about the text or the tail content,
+and finally the position within either text or tail.
+
+The ``goto`` method allows you to address an exact position within
+the textual content of a given element. It returns a tuple with the
+three above mentioned items (element, text or tail, position), where
+``text_or_tail`` is an integer value corresponding to either
+``xmlhelper.TEXT`` (1) or ``xmlhelper.TAIL`` (2). Note that it is
+recommended to always check for ``TEXT`` or ``TAIL`` instead of for
+the integer values directly.
+
+>>> doc = et.fromstring("<text>This <em>is</em> text.<milestone/></text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 2)
+>>> (subelement.tag, text_or_tail, pos)
+('text', 1, 2)
+
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 5)
+>>> (subelement.tag, text_or_tail, pos)
+('em', 1, 0)
+
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 7)
+>>> (subelement.tag, text_or_tail, pos)
+('em', 2, 0)
+
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 8)
+>>> (subelement.tag, text_or_tail, pos)
+('em', 2, 1)
+
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 80)
+>>> (subelement, text_or_tail, pos)
+(None, None, 13)
+
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 12)
+>>> (subelement.tag, text_or_tail, pos)
+('em', 2, 5)
+
+Skipping of elements works as it does with ``get_text``.
+
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 6, "em")
+>>> (subelement.tag, text_or_tail, pos)
+('em', 2, 1)
+
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 6, "*")
+>>> (subelement.tag, text_or_tail, pos)
+('em', 2, 1)
+
+>>> doc = et.fromstring("<text><milestone/></text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 0)
+>>> (subelement.tag, text_or_tail, pos)
+('text', 1, 0)
+
+>>> doc = et.fromstring("<text>a</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('text', 1, 1)
+
+>>> doc = et.fromstring("<text>x<b/></text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('text', 1, 1)
+
+>>> doc = et.fromstring("<text>x<b/>y</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('b', 2, 0)
+
+>>> doc = et.fromstring("<text><b>x</b>y</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('b', 2, 0)
+
+>>> doc = et.fromstring("<text><c><b>x</b></c>y</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('c', 2, 0)
+
+>>> doc = et.fromstring("<text><b>x</b><c/><d/>y</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('d', 2, 0)
+
+>>> doc = et.fromstring("<text><e><b>x</b></e><c/><d/>y</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('d', 2, 0)
+
+>>> doc = et.fromstring("<text><e><b>x</b><c/></e><d/>y</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('d', 2, 0)
+
+>>> doc = et.fromstring("<text><e><b>x</b><c/></e><d>y</d>z</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('d', 1, 0)
+
+>>> doc = et.fromstring("<text><e><b>x</b><c/><d/></e>y</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('e', 2, 0)
+
+>>> doc = et.fromstring("<text><e><b>x</b>y<c/><d/></e>z</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('b', 2, 0)
+
+>>> doc = et.fromstring("<text><c><b/>x</c>y</text>")
+>>> subelement, text_or_tail, pos = xmlhelper.goto(doc, 1)
+>>> (subelement.tag, text_or_tail, pos)
+('c', 2, 0)
+
+6. insert_into_text(el, new_el, pos)
+====================================
+
+>>> doc = et.fromstring("<text>abcd</text>")
+>>> new_el = et.fromstring("<new>huhu</new>")
+>>> new_el = xmlhelper.insert_into_text(doc, new_el, 2)
+>>> new_el.tag
+'new'
+
+>>> new_el.getparent().tag
+'text'
+
+>>> bprint(et.tostring(doc))
+<text>ab<new>huhu</new>cd</text>
+
+The new element can also bring its own tail:
+
+>>> doc = et.fromstring("<text>abcd</text>")
+>>> new_el = et.fromstring("<new>huhu</new>")
+>>> new_el.tail = "TAIL"
+>>> new_el = xmlhelper.insert_into_text(doc, new_el, 2)
+>>> bprint(et.tostring(doc))
+<text>ab<new>huhu</new>TAILcd</text>
+
+If pos is larger than the length of the text, append to the
+end of the text.
+
+>>> doc = et.fromstring("<text>abcd</text>")
+>>> new_el = et.fromstring("<new>huhu</new>")
+>>> new_el = xmlhelper.insert_into_text(doc, new_el, 2000)
+>>> bprint(et.tostring(doc))
+<text>abcd<new>huhu</new></text>
+
+7. insert_into_tail(el, new_el, pos)
+====================================
+
+>>> doc = et.fromstring("<text>ab<new>huhu</new>cd</text>")
+>>> el = doc.find("new")
+>>> milestone = et.fromstring("<milestone/>")
+>>> milestone = xmlhelper.insert_into_tail(el, milestone, 1)
+>>> milestone.tag
+'milestone'
+
+>>> milestone.getparent().tag
+'text'
+
+>>> bprint(et.tostring(doc))
+<text>ab<new>huhu</new>c<milestone/>d</text>
+
+The new element can bring its own tail:
+
+>>> doc = et.fromstring("<text>ab<new>huhu</new>cd</text>")
+>>> el = doc.find("new")
+>>> milestone = et.fromstring("<milestone/>")
+>>> milestone.tail = "TAIL"
+>>> milestone = xmlhelper.insert_into_tail(el, milestone, 1)
+>>> bprint(et.tostring(doc))
+<text>ab<new>huhu</new>c<milestone/>TAILd</text>
+
+>>> doc = et.fromstring("<text>ab<new>huhu</new></text>")
+>>> el = doc.find("new")
+>>> milestone = et.fromstring("<milestone/>")
+>>> milestone = xmlhelper.insert_into_tail(el, milestone, 0)
+>>> bprint(et.tostring(doc))
+<text>ab<new>huhu</new><milestone/></text>
+
+>>> doc = et.fromstring("<text>ab<new>huhu</new>cd</text>")
+>>> el = doc.find("new")
+>>> milestone = xmlhelper.insert_into_tail(el, milestone, 2)
+>>> bprint(et.tostring(doc))
+<text>ab<new>huhu</new>cd<milestone/></text>
+
+If pos is larger than the length of the tail, append to the
+end of the tail.
+
+>>> doc = et.fromstring("<text>ab<new>huhu</new>cd</text>")
+>>> el = doc.find("new")
+>>> milestone = xmlhelper.insert_into_tail(el, milestone, 3000)
+>>> bprint(et.tostring(doc))
+<text>ab<new>huhu</new>cd<milestone/></text>
+
+8. insert_at(el, new_el, pos, skip_els)
+=======================================
+
+You can insert an element at a certain position.
+
+>>> doc = et.fromstring("<text>This <em>is</em> text.<milestone/></text>")
+>>> milestone = et.Element("milestone")
+>>> new_el = xmlhelper.insert_at(doc, milestone, 8)
+>>> new_el.getparent().tag
+'text'
+
+>>> bprint(et.tostring(doc))
+<text>This <em>is</em> <milestone/>text.<milestone/></text>
+
+>>> x = xmlhelper.insert_at(doc.find("milestone"), et.Element("x"), 0)
+>>> bprint(et.tostring(doc))
+<text>This <em>is</em> <milestone><x/></milestone>text.<milestone/></text>
+
+>>> doc = et.fromstring("<a>x</a>")
+>>> new_el = et.Element("b")
+>>> b = xmlhelper.insert_at(doc, new_el, 1)
+>>> bprint(et.tostring(doc))
+<a>x<b/></a>
+
+>>> doc = et.fromstring("<text>This <em>is</em> text.<milestone/></text>")
+>>> milestone = et.Element("milestone")
+>>> new_el = xmlhelper.insert_at(doc, milestone, 5)
+>>> bprint(et.tostring(doc))
+<text>This <em><milestone/>is</em> text.<milestone/></text>
+
+>>> doc = et.fromstring("<text>Here</text>")
+>>> milestone = et.Element("milestone")
+>>> new_el = xmlhelper.insert_at(doc, milestone, 4)
+>>> bprint(et.tostring(doc))
+<text>Here<milestone/></text>
+
+>>> doc = et.fromstring("<text>Here</text>")
+>>> milestone = et.Element("milestone")
+>>> new_el = xmlhelper.insert_at(doc, milestone, 5)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Cannot go to pos 5 in element <text>.
+
+9. remove_tags(el)
+==================
+
+>>> doc = et.fromstring("<a>ab<b/>c <c>de<d/>f</c> g</a>")
+>>> xmlhelper.remove_tags(doc.find("c"))
+>>> bprint(et.tostring(doc))
+<a>ab<b/>c de<d/>f g</a>
+
+>>> doc = et.fromstring("<a>abc <c>de<d/>f</c> g</a>")
+>>> xmlhelper.remove_tags(doc.find("c"))
+>>> bprint(et.tostring(doc))
+<a>abc de<d/>f g</a>
+
+>>> doc = et.fromstring("<a>ab<c/>c</a>")
+>>> xmlhelper.remove_tags(doc.find("c"))
+>>> bprint(et.tostring(doc))
+<a>abc</a>
+
+10. get_pos(el, skip_els)
+=========================
+
+>>> doc = et.fromstring("<a>ab<b>xx</b>c <c/>def ghi</a>")
+>>> xmlhelper.get_pos(doc)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Element a has no parent.
+
+>>> xmlhelper.get_pos(doc.find("b"))
+2
+
+>>> xmlhelper.get_pos(doc.find("c"))
+6
+
+>>> xmlhelper.get_pos(doc.find("c"), "*")
+4
+
+>>> xmlhelper.get_pos(doc.find("c"), "b")
+4
+
+>>> xmlhelper.get_pos(doc.find("c"), ["b"])
+4
+
+>>> el = doc.find("c")
+>>> pos = xmlhelper.get_pos(el)
+>>> parent = el.getparent()
+>>> txt = xmlhelper.get_text(parent)
+>>> newpos = txt.find(" ", pos)
+>>> newel = et.Element("placeholder")
+>>> placeholder = xmlhelper.insert_at(parent, newel, newpos)
+>>> xmlhelper.delete(el)
+>>> bprint(et.tostring(doc))
+<a>ab<b>xx</b>c def<placeholder/> ghi</a>
+
+>>> doc = et.fromstring("<a><b/></a>")
+>>> xmlhelper.get_pos(doc.find("b"))
+0
+
+>>> doc = et.fromstring("<a><b/><c/></a>")
+>>> xmlhelper.get_pos(doc.find("c"))
+0
+
+>>> doc = et.fromstring("<a><b/>x<c/></a>")
+>>> xmlhelper.get_pos(doc.find("c"))
+1
+
+11. cut(from_el, to_el)
+=======================
+
+You can cut out passages of a document:
+
+>>> doc = et.fromstring("<a>abcd<cutstart/>efgh<cutend/>ijk</a>")
+>>> cutstart = doc.find("cutstart")
+>>> cutend = doc.find("cutend")
+>>> xmlhelper.cut(cutstart, cutend)
+>>> bprint(et.tostring(doc))
+<a>abcdijk</a>
+
+>>> doc = et.fromstring("<a>abcd<cutstart/>efg<h>hi</h><cutend/>jk</a>")
+>>> cutstart = doc.find("cutstart")
+>>> cutend = doc.find("cutend")
+>>> xmlhelper.cut(cutstart, cutend)
+>>> bprint(et.tostring(doc))
+<a>abcdjk</a>
+
+>>> doc = et.fromstring("<a>abcd<cutstart/>efg<h>hi<cutend/></h>jk</a>")
+>>> cutstart = doc.find("cutstart")
+>>> cutend = doc.xpath("//cutend")[0]
+>>> xmlhelper.cut(cutstart, cutend)
+>>> bprint(et.tostring(doc))
+<a>abcd<h/>jk</a>
+
+>>> doc = et.fromstring("<a>a<hi>d<cutstart/>e</hi>fg<h>hi<cutend/></h>jk</a>")
+>>> cutstart = doc.xpath("//cutstart")[0]
+>>> cutend = doc.xpath("//cutend")[0]
+>>> xmlhelper.cut(cutstart, cutend)
+>>> bprint(et.tostring(doc))
+<a>a<hi>d</hi><h/>jk</a>
+
+>>> doc = et.fromstring("<a>a<x><hi>d<cutstart/>e</hi>"\
+... "fg<h>hi<cutend/>j</h></x>kl</a>")
+>>> cutstart = doc.xpath("//cutstart")[0]
+>>> cutend = doc.xpath("//cutend")[0]
+>>> xmlhelper.cut(cutstart, cutend)
+>>> bprint(et.tostring(doc))
+<a>a<x><hi>d</hi><h>j</h></x>kl</a>
+
+>>> doc = et.fromstring("<a>abcd<cutend/>efgh<cutstart/>ijk</a>")
+>>> cutstart = doc.find("cutstart")
+>>> cutend = doc.find("cutend")
+>>> xmlhelper.cut(cutstart, cutend)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Element ``from_el`` ... document order.
+
+12. rstrip(el)
+==============
+
+Right strip the text contained in ``el``.
+
+>>> doc = et.fromstring("<a/>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc)))
+<a/>
+>>> doc = et.fromstring("<a>x</a>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc)))
+<a>x</a>
+>>> doc = et.fromstring("<a> </a>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc)))
+<a/>
+>>> doc = et.fromstring("<a>xyz </a>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc)))
+<a>xyz</a>
+>>> doc = et.fromstring("<a>xyz<b>x </b></a>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc)))
+<a>xyz<b>x</b></a>
+>>> doc = et.fromstring("<a>xyz <b> </b></a>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc)))
+<a>xyz<b/></a>
+>>> doc = et.fromstring("<a>xyz <b> </b> <c> <d> </d> </c> </a>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc)))
+<a>xyz<b/><c><d/></c></a>
+>>> doc = et.fromstring("<a>xyz<b>x </b> </a>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc, skip_els="b")))
+<a>xyz<b>x </b></a>
+>>> doc = et.fromstring("<a>xyz<b>x<c> </c> </b> </a>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc, skip_els="*")))
+<a>xyz<b>x<c> </c> </b></a>
+>>> doc = et.fromstring("<a>xyz <b>x<c> </c> </b> </a>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc, skip_els="*")))
+<a>xyz<b>x<c> </c> </b></a>
+>>> doc = et.fromstring("<doc>  <a> x </a> hullo  <b>  </b> </doc>")
+>>> bprint(et.tostring(xmlhelper.rstrip(doc, skip_els = "a")))
+<doc>  <a> x </a> hullo<b/></doc>
+
+13. goto_next_char(el, text_or_tail, pos, container, skip_els=[])
+=================================================================
+
+>>> doc = et.fromstring("<a>x<b/>y</a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc)
+>>> (el.tag, text_or_tail)
+('b', 2)
+>>> doc = et.fromstring("<a>x<b/><c/><d/>y</a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc)
+>>> (el.tag, text_or_tail)
+('d', 2)
+>>> doc = et.fromstring("<a>x<b/><c/><d>y</d></a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc)
+>>> (el.tag, text_or_tail)
+('d', 1)
+>>> doc = et.fromstring("<a>x<b/><c/><d><e><f>y</f></e></d></a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc)
+>>> (el.tag, text_or_tail)
+('f', 1)
+>>> doc = et.fromstring("<a>x<b/><c/><d><e><f></f>y</e></d></a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc)
+>>> (el.tag, text_or_tail)
+('f', 2)
+>>> doc = et.fromstring("<a>x<b/><c/><d><e><f></f></e></d></a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc)
+>>> (el, text_or_tail)
+(None, None)
+>>> doc = et.fromstring("<a><b/><c/><d><e><f></f>x</e>y</d></a>")
+>>> e = doc.find("d").find("e")
+>>> f = e.find("f")
+>>> el, text_or_tail = xmlhelper.goto_next_char(f, xmlhelper.TEXT, 1, e)
+>>> (el, text_or_tail)
+(None, None)
+>>> doc = et.fromstring("<a><b/><c/><d><e><f></f>x</e>y</d></a>")
+>>> d = doc.find("d")
+>>> f = d.find("e").find("f")
+>>> el, text_or_tail = xmlhelper.goto_next_char(f, xmlhelper.TEXT, 1, d)
+>>> (el.tag, text_or_tail)
+('e', 2)
+>>> doc = et.fromstring("<a>x<b/></a>")
+>>> b = doc.find("b")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, b)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Element <a> not in container <b>.
+>>> doc = et.fromstring("<a>x<b>z</b>y</a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc, ["b"])
+>>> (el.tag, text_or_tail)
+('b', 2)
+
+14. move_element(src, target)
+=============================
+
+>>> doc = et.fromstring("<a><b a1=\"b1\">hullo<c/></b>hullo<target/></a>")
+>>> b = doc.find("b")
+>>> target = doc.find("target")
+>>> xmlhelper.move_element(b, target)
+>>> bprint(et.tostring(doc))
+<a>hullo<b a1="b1">hullo<c/></b></a>
+>>> s = "<a><b>hullo</b>hullo<target a1=\"b1\">"
+>>> s += "<c><d/></c>hullo</target></a>"
+>>> doc = et.fromstring(s)
+>>> b = doc.find("b")
+>>> target = doc.find("target")
+>>> xmlhelper.move_element(b, target)
+>>> bprint(et.tostring(doc))
+<a>hullo<b>hullo</b></a>
+>>> doc = et.fromstring("<a><src><target/></src></a>")
+>>> src = doc.find("src")
+>>> target = src.find("target")
+>>> xmlhelper.move_element(src, target)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Target <target> contained in source <src>.
+
+15. move_element_to_pos(src, target, text_or_tail, pos)
+=======================================================
+
+>>> doc = et.fromstring("<a><src/>abcd<target>efgh</target></a>")
+>>> src = doc.find("src")
+>>> target = doc.find("target")
+>>> new_el = xmlhelper.move_element_to_pos(src, target, xmlhelper.TEXT, 2)
+>>> bprint(et.tostring(doc))
+<a>abcd<target>ef<src/>gh</target></a>
+
+>>> doc = et.fromstring("<a><src/>abcd<target>efgh</target>abc</a>")
+>>> src = doc.find("src")
+>>> target = doc.find("target")
+>>> new_el = xmlhelper.move_element_to_pos(src, target, xmlhelper.TAIL, 1)
+>>> bprint(et.tostring(doc))
+<a>abcd<target>efgh</target>a<src/>bc</a>
+
+16. move_element_to_textpos(src, target, textpos, skip_els=[])
+==============================================================
+
+>>> doc = et.fromstring("<a>ab<src/><b>cdef</b></a>")
+>>> src = doc.find("src")
+>>> new_el = xmlhelper.move_element_to_textpos(src, doc, 4)
+>>> bprint(et.tostring(doc))
+<a>ab<b>cd<src/>ef</b></a>
+
+17. wrap(el, target)
+====================
+
+Wrap a new element ``el`` around a given target
+element ``target``.
+
+>>> doc = et.fromstring("<a>x<b/>x<c>yy</c>zz<d/></a>")
+>>> target = doc.find("c")
+>>> el = et.Element("new")
+>>> xmlhelper.wrap(el, target)
+>>> bprint(et.tostring(doc))
+<a>x<b/>x<new><c>yy</c></new>zz<d/></a>
+
+Of course you cannot wrap around the root element:
+
+>>> el = et.Element("new")
+>>> xmlhelper.wrap(el, doc)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Element <a> has no parent (root element?).
+
+18. collect(new_el, target_els)
+===============================
+
+Put all ``target_els`` into ``new_el``.
+``new_el`` will be inserted at the position of the first
+target element.
+
+NB:
+
+This does basically operate like ``span``.
+The difference is that ``span`` creates and returns
+a new element, whereas ``collect`` receives the new
+element from the caller. Also the target elements
+need not all share the same parents.
+
+An important difference seems to be that the last
+target element gets cut (i. e. leaves its tail behind),
+while all the other target elements are being moved
+with their tail.
+
+I do not think that I use this feature anywhere.
+Maybe this will become a deprecated feature sooner
+or later.
+
+>>> doc = et.fromstring("<a>a<b/>b<c/>c<d/>d</a>")
+>>> c = doc.find("c")
+>>> d = doc.find("d")
+>>> new_el = et.Element("new")
+>>> xmlhelper.collect(new_el, [c, d])
+>>> bprint(et.tostring(doc))
+<a>a<b/>b<new><c/>c<d/></new>d</a>
+>>> doc = et.fromstring("<a>a<b/>b<c/>c<d/>d</a>")
+>>> c = doc.find("c")
+>>> new_el = et.Element("new")
+>>> xmlhelper.collect(new_el, [c])
+>>> bprint(et.tostring(doc))
+<a>a<b/>b<new><c/></new>c<d/>d</a>
+
+``target_els`` must be a non-empty list of elements.
+
+>>> doc = et.fromstring("<a/>")
+>>> xmlhelper.collect(et.Element("new"), [])  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: ``target_els`` must be non empty list of elements.
+
+>>> doc = et.fromstring("<a/>")
+>>> xmlhelper.collect(et.Element("new"), [doc])  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Element <a> has no parent (root element?).
+
+>>> doc = et.fromstring("<a><b/></a>")
+>>> b = doc.find("b")
+>>> xmlhelper.collect(et.Element("new"), [b, et.Element("free")])  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Element <free> has no parent (root element?).
+
+19. span(start, end)
+============================
+
+Wrap an element ``span`` around ``start`` and ``end``.
+If only ``start`` is given, just wrap a ``span`` around it.
+Return newly created element ``span``.
+
+>>> doc = et.fromstring("<a>a<b/>b<c/>c<d/>d</a>")
+>>> b = doc.find("b")
+>>> d = doc.find("d")
+>>> s = xmlhelper.span(b, d)
+>>> s.tag
+'span'
+>>> bprint(et.tostring(doc))
+<a>a<span><b/>b<c/>c<d/></span>d</a>
+>>> doc = et.fromstring("<a>a<b/>b</a>")
+>>> b = doc.find("b")
+>>> s = xmlhelper.span(b)
+>>> s.tag
+'span'
+>>> bprint(et.tostring(doc))
+<a>a<span><b/></span>b</a>
+
+Spanning is only possible if ``start`` and ``end`` share
+the same parent.
+
+>>> doc = et.fromstring("<a>xxx<b/>xxx<c><d/></c></a>")
+>>> b = doc.find("b")
+>>> d = doc.find("c/d")
+>>> s = xmlhelper.span(b, d)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Start and end elements must be siblings.
+
+And the elements have to come in the right order.
+
+>>> doc = et.fromstring("<a>a<b/>b<c/>c<d/>d</a>")
+>>> b = doc.find("b")
+>>> d = doc.find("d")
+>>> s = xmlhelper.span(d, b)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Start element must be before end element.
+
+20. cut_element(el)
+===================
+
+Remove ``el`` from document and return it without its tail.
+
+>>> doc = et.fromstring("<a>x<b/>y<c/>z</a>")
+>>> c = doc.find("c")
+>>> ret = xmlhelper.cut_element(c)
+>>> bprint(et.tostring(doc))
+<a>x<b/>yz</a>
+>>> doc = et.fromstring("<a>x<b/>y<c/>z</a>")
+>>> b = doc.find("b")
+>>> ret = xmlhelper.cut_element(b)
+>>> bprint(et.tostring(doc))
+<a>xy<c/>z</a>
+>>> doc = et.fromstring("<a>x<b/>y<c/>z<d/></a>")
+>>> c = doc.find("c")
+>>> ret = xmlhelper.cut_element(c)
+>>> bprint(et.tostring(doc))
+<a>x<b/>yz<d/></a>
+
+Of course you cannot cut the root element:
+
+>>> doc = et.fromstring("<a/>")
+>>> xmlhelper.cut_element(doc)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Element <a> has no parent (root element?).
+
+21. copy(el)
+============
+
+>>> doc = et.fromstring("<a>x<b>y<c/>y</b>z</a>")
+>>> b = doc.find("b")
+>>> c = xmlhelper.copy(b)
+>>> bprint(et.tostring(c))
+<b>y<c/>y</b>
+>>> bprint(et.tostring(doc))
+<a>x<b>y<c/>y</b>z</a>
+
+22. split(el)
+=============
+
+Split the parent of ``el``.
+
+>>> doc = et.fromstring("<doc><a>abc<b/>def<c/>ghi</a></doc>")
+>>> b = doc.find("a").find("b")
+>>> xmlhelper.split(b)
+>>> bprint(et.tostring(doc))
+<doc><a>abc</a><b/><a>def<c/>ghi</a></doc>
+>>> doc = et.fromstring("<doc><a><b/>def<c/>ghi</a></doc>")
+>>> b = doc.find("a").find("b")
+>>> xmlhelper.split(b)
+>>> bprint(et.tostring(doc))
+<doc><a/><b/><a>def<c/>ghi</a></doc>
+>>> doc = et.fromstring("<doc><a>abc<b/></a></doc>")
+>>> b = doc.find("a").find("b")
+>>> xmlhelper.split(b)
+>>> bprint(et.tostring(doc))
+<doc><a>abc</a><b/><a/></doc>
+>>> doc = et.fromstring("<a/>")
+>>> xmlhelper.split(doc)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Element <a> has no parent.
+>>> doc = et.fromstring("<a><b/></a>")
+>>> b = doc.find("b")
+>>> xmlhelper.split(b)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Element <b> has no grandparent.
+>>> doc = et.fromstring('<doc>x<a s="">y<b>z</b>w</a>v<c/>u<c/>t</doc>')
+>>> b = doc.xpath("//b")[0]
+>>> xmlhelper.split(b)
+>>> bprint(et.tostring(doc))
+<doc>x<a s="">y</a><b>z</b><a s="">w</a>v<c/>u<c/>t</doc>
+
+23. get_xpath_index(el)
+=======================
+
+Get the index of ``el`` within its siblings sharing the same tag name.
+
+>>> doc = et.fromstring("<doc><a>one</a><b>one</b><a/><b>two</b></doc>")
+>>> xmlhelper.get_xpath_index(doc)
+1
+>>> b1 = doc[1]
+>>> b1.tag
+'b'
+>>> b1.text
+'one'
+>>> xmlhelper.get_xpath_index(b1)
+1
+>>> b2 = doc[3]
+>>> b2.tag
+'b'
+>>> b2.text
+'two'
+>>> xmlhelper.get_xpath_index(b2)
+2
+>>> a = doc[0]
+>>> a.tag
+'a'
+>>> a.text
+'one'
+>>> xmlhelper.get_xpath_index(a)
+1
+
+24. get_xpath(el)
+=================
+
+Return xpath of given element relative to document root.
+
+>>> doc = et.fromstring("<doc><a/><a><b><c/></b></a><a/></doc>")
+>>> b = doc.xpath("//b")[0]
+>>> xmlhelper.get_xpath(b)
+'/doc[1]/a[2]/b[1]'
+>>> xmlhelper.get_xpath(doc)
+'/doc[1]'
+
+25. delat(el, attname)
+======================
+
+Delete attribute, fail silently if attribute does not exist.
+
+>>> doc = et.fromstring("<doc myatt='xxx'/>")
+>>> xmlhelper.delat(doc, "myatt")
+>>> bprint(et.tostring(doc))
+<doc/>
+>>> xmlhelper.delat(doc, "nonexisting")
+
+26. lstrip(el, skip_els)
+========================
+
+Left strip the text contained in ``el``.
+
+>>> doc = et.fromstring("<doc>   hullo</doc>")
+>>> bprint(et.tostring(xmlhelper.lstrip(doc)))
+<doc>hullo</doc>
+>>> doc = et.fromstring("<doc>   hullo  </doc>")
+>>> bprint(et.tostring(xmlhelper.lstrip(doc)))
+<doc>hullo  </doc>
+>>> doc = et.fromstring("<doc>  <a> </a> hullo</doc>")
+>>> bprint(et.tostring(xmlhelper.lstrip(doc)))
+<doc><a></a>hullo</doc>
+>>> doc = et.fromstring("<doc>  <a> x </a> hullo</doc>")
+>>> bprint(et.tostring(xmlhelper.lstrip(doc, skip_els = "a")))
+<doc><a> x </a>hullo</doc>
+>>> doc = et.fromstring("<doc><a>xxx</a><b> hullo</b><b>!</b></doc>")
+>>> bprint(et.tostring(xmlhelper.lstrip(doc, skip_els = "a")))
+<doc><a>xxx</a><b>hullo</b><b>!</b></doc>
+>>> doc = et.fromstring("<doc><a>xxx</a> <b> hullo</b><b>!</b> </doc>")
+>>> bprint(et.tostring(xmlhelper.lstrip(doc, skip_els = "*")))
+<doc><a>xxx</a><b> hullo</b><b>!</b></doc>
+>>> doc = et.fromstring("<doc>  <a> x </a> hullo  <b>  </b> </doc>")
+>>> bprint(et.tostring(xmlhelper.lstrip(doc, skip_els = "a")))
+<doc><a> x </a>hullo  <b>  </b> </doc>
+
+27. strip(el, skip_els)
+=======================
+
+Convenience method: combine lstrip() and rstrip()
+
+>>> doc = et.fromstring("<doc>   hullo  </doc>")
+>>> bprint(et.tostring(xmlhelper.strip(doc)))
+<doc>hullo</doc>
+>>> doc = et.fromstring("<doc>  <a> x </a> hullo  <b>  </b> </doc>")
+>>> bprint(et.tostring(xmlhelper.strip(doc, skip_els = "a")))
+<doc><a> x </a>hullo<b/></doc>
+
+28. FollowingIterator(el)
+=========================
+
+Iterate over the following axis of a given element.
+
+>>> doc = et.fromstring("<a><b><c/></b><d><e/><f/></d><g/></a>")
+>>> el = doc.find("b")
+>>> fi = xmlhelper.FollowingIterator(el)
+>>> for foll_el in fi:
+...   print(foll_el.tag)
+d
+e
+f
+g
+>>> next(fi)
+Traceback (most recent call last):
+...
+StopIteration
+
+29. PrecedingIterator(el)
+=========================
+
+Iterate over the preceding axis of a given element in reverse document
+order.
+
+>>> doc = et.fromstring("<a><b><c/><d/></b><e><f/></e><g/></a>")
+>>> el = doc.find("e")
+>>> pi = xmlhelper.PrecedingIterator(el)
+>>> for prec_el in pi:
+...   print(prec_el.tag)
+d
+c
+b
+>>> next(pi)
+Traceback (most recent call last):
+...
+StopIteration
+
+>>> doc = et.fromstring("<doc/>")
+>>> pi = xmlhelper.PrecedingIterator(doc)
+>>> next(pi)
+Traceback (most recent call last):
+...
+StopIteration
+
+30. Indenter
+============
+
+NB: Not all configuration is supported right now (i. e. textwrapping is
+not implemented).
+
+>>> document = """\
+... <html>
+... <p>  
+...  
+...  Hullo
+... <span>inline
+... </span>
+... <span>another inline</span>. And text continues here.</p>
+... <p><i>Hul</i>lo</p>
+... <div><p>This is <span>inline</span> text.
+... </p><p>And this, too.</p>
+... <p>
+... And here we have a particularly long text with
+... several line breaks and we still want it to be
+... indented in a pretty way.
+... </p>
+... </div>
+... </html>
+... """
+>>> doc = et.fromstring(document)
+>>> xmlhelper.Indenter(doc, block=["html", "div", "p"]).indent()
+>>> bprint(et.tostring(doc))
+<html>
+  <p>
+    Hullo
+    <span>inline
+    </span>
+    <span>another inline</span>. And text continues here.
+  </p>
+  <p><i>Hul</i>lo</p>
+  <div>
+    <p>This is <span>inline</span> text.
+    </p>
+    <p>And this, too.</p>
+    <p>
+      And here we have a particularly long text with
+      several line breaks and we still want it to be
+      indented in a pretty way.
+    </p>
+  </div>
+</html>
+>>> doc = et.fromstring("<html><p/><p/></html>")
+>>> xmlhelper.Indenter(doc, block=["html", "p"]).indent()
+>>> bprint(et.tostring(doc))
+<html>
+  <p/>
+  <p/>
+</html>
+>>> doc = et.fromstring("<html><p/><p/></html>")
+>>> xmlhelper.Indenter(doc, block=["html", "p"], shiftwidth=1).indent()
+>>> bprint(et.tostring(doc))
+<html>
+ <p/>
+ <p/>
+</html>
+>>> doc = et.fromstring("<html xml:space=\"preserve\"><p/> <p/></html>")
+>>> xmlhelper.Indenter(doc, block=["html", "p"], honor_xml_space=True).indent()
+>>> bprint(et.tostring(doc))
+<html xml:space="preserve"><p/> <p/></html>
+
+Indentation can also be done on a complete ElementTree:
+
+>>> doc = et.fromstring("<html><p/><p/></html>")
+>>> eltree = et.ElementTree(doc)
+>>> xmlhelper.Indenter(eltree, block=["html", "p"]).indent()
+>>> bprint(et.tostring(doc))
+<html>
+  <p/>
+  <p/>
+</html>
+
+31. Testing for linebreaks
+==========================
+
+Essentially these are helper functions for the Indenter and due to their
+limitations mostly only useful within the Indenter context, but we test
+them anyway:
+
+>>> doc = et.fromstring("<doc>  \nabc<a>xxx</a><b/>\n</doc>")
+>>> i = xmlhelper.Indenter(doc)
+>>> i.startswith_linebreak(doc)
+True
+>>> i.endswith_linebreak(doc)
+True
+>>> a = doc.find("a")
+>>> i.startswith_linebreak(a)
+False
+>>> i.endswith_linebreak(a)
+False
+>>> b = doc.find("b")
+>>> i.endswith_linebreak(b)
+False
+
+32. ``get_t_struct(el, skip_els=[])``
+=====================================
+
+This is a helper function for ``goto``, but it might be useful in other
+contexts, too. ``get_t_struct`` is a generator that generates a list of
+text parts contained in ``el`` in document order.
+
+It yields tuples: ``[(el, text_or_tail, txt), ...]`` where ``txt`` is
+the textual content and ``text_or_tail`` is either ``xmlhelper.TEXT``
+or ``xmlhelper.TAIL``.
+
+This can be useful if you want to iterate over the text nodes contained
+in an element.
+
+>>> doc = et.fromstring("<doc>Hello this is <em>good</em> text.</doc>")
+>>> for (el, text_or_tail, txt) in xmlhelper.get_t_struct(doc):
+...   print("{}: {}: '{}'".format(el.tag, text_or_tail, txt))
+doc: 1: 'Hello this is '
+em: 1: 'good'
+em: 2: ' text.'
+
+>>> for (el, text_or_tail, txt) in xmlhelper.get_t_struct(doc, "em"):
+...   print("{}: {}: '{}'".format(el.tag, text_or_tail, txt))
+doc: 1: 'Hello this is '
+em: 2: ' text.'
+
+33. Text nodes
+==============
+
+>>> doc = et.fromstring("<doc>abc<a/>def<b/></doc>")
+>>> tn = xmlhelper.TextNode(doc.text, doc)
+>>> bprint(tn.text)
+abc
+>>> bprint(tn.getparent().tag)
+doc
+>>> bprint(tn.getnext().tag)
+a
+>>> tn.getprevious() == None
+True
+>>> b = doc.find("b")
+>>> tn = xmlhelper.TextNode(b.text, b)
+>>> bprint(tn.text)
+<BLANKLINE>
+>>> tn.empty
+True
+>>> tn.getnext() is None
+True
+
+34. Iterate over children (including text nodes)
+================================================
+
+>>> doc = et.fromstring("<doc>abc<a>skip</a>def<b/></doc>")
+>>> for n in xmlhelper.AllChildNodesIterator(doc):
+...     if isinstance(n, xmlhelper.TextNode):
+...         bprint(n.text)
+...     else:
+...         bprint("<" + n.tag + ">")
+... 
+abc
+<a>
+def
+<b>
+<BLANKLINE>
+
+>>> doc = et.fromstring("<doc><a>skip</a>def<b/></doc>")
+>>> for n in xmlhelper.AllChildNodesIterator(doc):
+...     if isinstance(n, xmlhelper.TextNode):
+...         bprint(n.text)
+...     else:
+...         bprint("<" + n.tag + ">")
+... 
+<BLANKLINE>
+<a>
+def
+<b>
+<BLANKLINE>
+
+35. ``Transformer``
+===================
+
+A simple transfomation framework is also available.
+
+>>> doc = et.fromstring("<?frontpi?><doc a=\"1\"><!--comment-->abc<x/><?pi?>def</doc>")
+>>> doctree = et.ElementTree(doc)
+
+The transformer can be initialized either with an ElementTree or just
+a root element.
+
+>>> t = xmlhelper.Transformer(doc)
+>>> t = xmlhelper.Transformer(doctree)
+
+The default is to just return a copy of the tree.
+
+>>> bprint(et.tostring(t.transform()))
+<?frontpi?><doc a="1"><!--comment-->abc<x/><?pi?>def</doc>
+
+The default return type of the transformation is always an ElementTree:
+
+>>> t = xmlhelper.Transformer(doc)
+>>> r = t.transform()
+>>> isinstance(r, et._ElementTree)
+True
+
+There are some flags that can be set at creation time. These allow you
+to skip over processing instructions or comments respectively. The third
+flag allows you to strip the document of all namespaces.
+
+>>> t = xmlhelper.Transformer(doctree, skip_pis=True)
+>>> bprint(et.tostring(t.transform()))
+<doc a="1"><!--comment-->abc<x/>def</doc>
+
+>>> t = xmlhelper.Transformer(doctree, skip_pis=True, skip_comments=True)
+>>> bprint(et.tostring(t.transform()))
+<doc a="1">abc<x/>def</doc>
+
+>>> doctree = et.ElementTree(et.fromstring("<doc xmlns=\"abc\"/>"))
+>>> t = xmlhelper.Transformer(doctree, strip_namespaces=True)
+>>> bprint(et.tostring(t.transform()))
+<doc/>
+
+Except for very trivial cases you will not directly use ``xmlhelper.Transformer``,
+but you will subclass it to do something useful.
+
+>>> doc = et.fromstring("<doc><oldname/>abc<todel>x</todel>def<wrap>gh<x/>ij</wrap></doc>")
+
+Let's say we want to rename the ``oldname`` element to ``newname``, completely
+remove the element ``todel``, and remove the surrounding tags of ``wrap``
+(but keep its content).
+
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _transform_element(self, element):
+...         if element.tag == "todel":
+...             return None
+...         elif element.tag == "wrap":
+...             return self._transform_children(element)
+...         return self._default_element_transformation(element)
+...     def _create_target_element(self, element):
+...         if element.tag == "oldname":
+...             return et.Element("newname")
+...         else:
+...             return super(MyTransformer, self)._create_target_element(element)
+... 
+>>> m = MyTransformer(doc)
+>>> bprint(et.tostring(m.transform()))
+<doc><newname/>abcdefgh<x/>ij</doc>
+
+.. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:
