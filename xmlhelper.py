@@ -373,6 +373,9 @@ class Transformer(object):
     def _addprevious(self, target, node):
         """Add ``node`` before ``target``"""
         if isinstance(target, list):
+            # @@@TODO:
+            # This doesn't seem right. If it is,
+            # we need to explain it.
             target.insert(0, node)
         else:
             target.addprevious(node)
