@@ -2,6 +2,18 @@
 Changelog for XMLservices
 *************************
 
+0.17.1
+======
+
+FollowingNodesIterator.
+
+``index_iter``: iterates over document, adds ``xml:id`` to index and
+yields element for further processing.
+
+``__eq__`` and ``__hash__`` for ``TextNode``.
+
+``skip_nodes``.
+
 0.17.0
 ======
 

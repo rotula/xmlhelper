@@ -17,7 +17,7 @@ Taken from
 ...         s = s.decode()
 ...     print(s)
 >>> xmlhelper.__version__
-'0.17.0'
+'0.17.1'
 
 2. get_text(el, skip_els, repl)
 ===============================
@@ -1145,7 +1145,25 @@ def
 <b>
 <BLANKLINE>
 
-35. ``Transformer``
+35. Iterate over following nodes (including text ndoes)
+=======================================================
+
+>>> doc = et.fromstring("<doc><a/>abc<b>def</b><c/></doc>")
+>>> a = doc[0]
+>>> for n in xmlhelper.FollowingNodesIterator(a):
+...     if isinstance(n, xmlhelper.TextNode):
+...         bprint(n.text)
+...     else:
+...         bprint("<" + n.tag + ">")
+abc
+<b>
+def
+<BLANKLINE>
+<c>
+<BLANKLINE>
+<BLANKLINE>
+
+36. ``Transformer``
 ===================
 
 A simple transfomation framework is also available.

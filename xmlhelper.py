@@ -13,7 +13,7 @@ from copy import deepcopy
 
 from lxml import etree as et
 
-__version__ = "0.17.0"
+__version__ = "0.17.1"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -235,6 +235,53 @@ class AllChildNodesIterator(object):
                 self.current_node.tail, self.element, self.current_node)
         return ret
 
+class FollowingNodesIterator(object):
+    """Iterator over all following nodes (including TextNodes)"""
+
+    b_done = False
+    start_node = None
+    current_node = None
+
+    def __init__(self, node):
+        self.start_node = node
+        self.current_node = node
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.next()
+
+    def _getnext(self, e):
+        if isinstance(e, TextNode):
+            return e.getnext()
+        if e.getparent() is not None:
+            return TextNode(e.tail, e.getparent(), e)
+        return None
+
+    def next(self):
+        if self.b_done:
+            return True
+        if (self.current_node == self.start_node
+                or isinstance(self.current_node, TextNode)):
+            ret = self._getnext(self.current_node)
+            parent = self.current_node
+            while ret is None:
+                parent = parent.getparent()
+                if parent is None:
+                    self.b_done = True
+                    raise StopIteration
+                ret = self._getnext(parent)
+            self.current_node = ret
+            return ret
+        else:
+            ret = TextNode(
+                self.current_node.text,
+                self.current_node
+            )
+            self.current_node = ret
+            return self.current_node
+
 class TextNode(object):
     """A simple node type to represent text that "knows"
     about its position in the document
@@ -274,6 +321,22 @@ class TextNode(object):
     def tag(self):
         return TextNode
 
+    def __eq__(self, other):
+        if not isinstance(other, TextNode):
+            return False
+        return (self.text == other.text
+                and self.parent == other.parent
+                and self.previous == other.previous)
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return (self.text, self.parent, self.previous).__hash__()
+
+    def __len__(self):
+        return len(self.text)
+
 class TransformerError(XMLHelperError):
     pass
 
@@ -294,6 +357,10 @@ class Transformer(object):
     front_nodes = None
     # strip namespaces
     strip_namespaces = False
+    # nodes to skip in ordinary processing,
+    # as they are used elsewhere or to be
+    # ignored completely
+    skip_nodes = None
 
     def __init__(self, input_doc, **kwargs):
         if isinstance(input_doc, et._Element):
@@ -304,6 +371,7 @@ class Transformer(object):
             self.root = input_doc.getroot()
         self._ids = {}
         self.front_nodes = self._get_front_nodes()
+        self.skip_nodes = []
         for (k, v) in kwargs.items():
             if k == "skip_pis":
                 self.skip_pis = v
@@ -335,6 +403,13 @@ class Transformer(object):
         """"Hook for any preliminary processing needed."""
         return
 
+    def index_iter(self):
+        """Iterate over all elements, add them to the default index.
+        """
+        for e in self.root.iter():
+            self._add_to_id_index(e)
+            yield e
+
     def index(self):
         """Build indexes, should be overridden
 
@@ -342,11 +417,12 @@ class Transformer(object):
         to implement get_element_by_id().
 
         If you override the indexing method (which you should),
-        call ``_add_to_id_index()`` for each element you are
-        iterating over in order to enable ``get_element_by_id()``.
+        use ``index_iter`` instead of the standard ``iter``
+        method to iterate over all elements. This ensures that
+        ``get_element_by_id`` works.
         """
-        for e in self.root.iter():
-            self._add_to_id_index(e)
+        for _ in self.index_iter():
+            pass
 
     def _add_to_id_index(self, element):
         """Builds the default ID index for get_element_by_id"""
@@ -476,7 +552,8 @@ class Transformer(object):
         ret = []
         for child_node in AllChildNodesIterator(element):
             # self._append_to(target, self._transform_node(child_node))
-            ret.append(self._transform_node(child_node))
+            if not child_node in self.skip_nodes:
+                ret.append(self._transform_node(child_node))
         return ret
 
     def _transform_text(self, text_node):
