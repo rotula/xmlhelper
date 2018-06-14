@@ -506,11 +506,12 @@ class Transformer(object):
                     newtail = (target[-1].tail or "") + stuff
                     target[-1].tail = newtail
             elif isinstance(stuff, list):
-                for item in stuff:
+                uselist = [x for x in stuff if not (x is None or x == "")]
+                for item in uselist:
                     self._append_to(target, item)
             else:
                 target.append(stuff)
-
+    
     def _transform_element(self, element):
         """Transform of an element
         
