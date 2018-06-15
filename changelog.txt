@@ -14,6 +14,11 @@ yields element for further processing.
 
 ``skip_nodes``.
 
+Better namespace handling in Transformer.
+
+Better list handling in Transformer.
+(@@@Tests still need to be written.)
+
 0.17.0
 ======
 

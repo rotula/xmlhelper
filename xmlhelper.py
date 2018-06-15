@@ -590,7 +590,7 @@ class Transformer(object):
             qn = et.QName(element)
             return et.Element(qn.localname)
         else:
-            return et.Element(element.tag)
+            return et.Element(element.tag, nsmap=element.nsmap)
 
     def _transform_attributes(self, element, target):
         """Hook for transforming attributes"""
