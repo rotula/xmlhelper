@@ -1232,4 +1232,14 @@ remove the element ``todel``, and remove the surrounding tags of ``wrap``
 >>> bprint(et.tostring(m.transform()))
 <doc><newname/>abcdefgh<x/>ij</doc>
 
+37. Efficiently reduce a list
+=============================
+
+>>> wild_list = [et.Element("x"), "abc", "def"]
+>>> new_list = xmlhelper.Transformer._flatten(wild_list)
+>>> len(new_list)
+1
+>>> bprint(new_list[0].tail)
+abcdef
+
 .. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:

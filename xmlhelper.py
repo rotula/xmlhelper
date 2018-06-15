@@ -506,10 +506,60 @@ class Transformer(object):
                     newtail = (target[-1].tail or "") + stuff
                     target[-1].tail = newtail
             elif isinstance(stuff, list):
-                for item in stuff:
+                flattened = self._flatten(stuff)
+                for item in flattened:
                     self._append_to(target, item)
             else:
                 target.append(stuff)
+
+    @staticmethod
+    def _flatten(wild_list):
+        """Take a wild list consisting of elements
+        (probably without tail -- room for more
+        optimization?) and texts and prepare them for
+        easy adding. The rationale is that it will save
+        a lot of time if we already have eliminated the
+        texts as they can all be added as tails.
+        """
+        ret = []
+        wild_list = [x for x in wild_list if x is not None]
+        max = len(wild_list)
+        i = 0
+        item = None
+        while i < max:
+            if item is None:
+                item = wild_list[i]
+            nxt = None if i + 1 == max else wild_list[i + 1]
+            if isinstance(item, (str, unitext)):
+                if nxt is not None:
+                    if isinstance(nxt, (str, unitext)):
+                        item += nxt
+                        i += 1
+                    else:
+                        ret.append(item)
+                        item = None
+                    i += 1
+                else:
+                    i += 1
+                    ret.append(item)
+                    item = None
+            elif isinstance(item, (et._Element)):
+                if nxt is not None:
+                    if isinstance(nxt, (str, unitext)):
+                        item.tail = (item.tail or "") + nxt
+                        i += 1
+                    else:
+                        ret.append(item)
+                        item = None
+                        i += 1
+                else:
+                    i += 1
+                    ret.append(item)
+                    item = None
+            else:
+                import pdb; pdb.set_trace()
+                raise TransformerError("Unknown type: " + str(type(item)))
+        return ret
 
     def _transform_element(self, element):
         """Transform of an element
@@ -553,7 +603,8 @@ class Transformer(object):
         for child_node in AllChildNodesIterator(element):
             # self._append_to(target, self._transform_node(child_node))
             if not child_node in self.skip_nodes:
-                ret.append(self._transform_node(child_node))
+                # ret.append(self._transform_node(child_node))
+                self._append_to(ret, self._transform_node(child_node))
         return ret
 
     def _transform_text(self, text_node):
