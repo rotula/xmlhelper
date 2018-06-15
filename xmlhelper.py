@@ -557,7 +557,6 @@ class Transformer(object):
                     ret.append(item)
                     item = None
             else:
-                import pdb; pdb.set_trace()
                 raise TransformerError("Unknown type: " + str(type(item)))
         return ret
 

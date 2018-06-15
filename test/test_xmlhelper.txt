@@ -1241,5 +1241,13 @@ remove the element ``todel``, and remove the surrounding tags of ``wrap``
 1
 >>> bprint(new_list[0].tail)
 abcdef
+>>> wild_list = ["abc", et.Element("x"), "def", "ghi", et.Element("y")]
+>>> new_list = xmlhelper.Transformer._flatten(wild_list)
+>>> len(new_list)
+3
+>>> bprint(new_list[1].tail)
+defghi
+>>> wild_list = [et.Element("x"), [et.Element("y"), "abc"]]
+>>> new_list = xmlhelper.Transformer._flatten(wild_list)
 
 .. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:
