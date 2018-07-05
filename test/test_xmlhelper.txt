@@ -1249,5 +1249,22 @@ abcdef
 defghi
 >>> wild_list = [et.Element("x"), [et.Element("y"), "abc"]]
 >>> new_list = xmlhelper.Transformer._flatten(wild_list)
+>>> len(new_list)
+2
+>>> bprint(new_list[1].tail)
+abc
+>>> wild_list = [et.Element("x"), [et.Element("y"), "abc"], "def"]
+>>> new_list = xmlhelper.Transformer._flatten(wild_list)
+>>> len(new_list)
+2
+>>> bprint(new_list[1].tail)
+abcdef
+>>> wild_list = [[et.Element("y"), "abc"], "def", et.Element("z")]
+>>> new_list = xmlhelper.Transformer._flatten(wild_list)
+>>> len(new_list)
+2
+>>> bprint(new_list[0].tail)
+abcdef
+
 
 .. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:

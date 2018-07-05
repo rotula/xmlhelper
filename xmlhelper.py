@@ -556,6 +556,11 @@ class Transformer(object):
                     i += 1
                     ret.append(item)
                     item = None
+            elif isinstance(item, (list)):
+                new_list = Transformer._flatten(item)
+                wild_list = wild_list[0:i] + new_list + wild_list[i + 1:]
+                max = len(wild_list)
+                item = None
             else:
                 raise TransformerError("Unknown type: " + str(type(item)))
         return ret
