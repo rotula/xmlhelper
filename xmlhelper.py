@@ -13,7 +13,7 @@ from copy import deepcopy
 
 from lxml import etree as et
 
-__version__ = "0.17.1"
+__version__ = "0.17.2"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -538,7 +538,7 @@ class Transformer(object):
                     else:
                         ret.append(item)
                         item = None
-                    i += 1
+                        i += 1
                 else:
                     i += 1
                     ret.append(item)

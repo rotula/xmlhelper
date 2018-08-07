@@ -17,7 +17,7 @@ Taken from
 ...         s = s.decode()
 ...     print(s)
 >>> xmlhelper.__version__
-'0.17.1'
+'0.17.2'
 
 2. get_text(el, skip_els, repl)
 ===============================
@@ -1265,6 +1265,13 @@ abcdef
 2
 >>> bprint(new_list[0].tail)
 abcdef
-
+>>> wild_list = ["a", "b", "c", "d", "e", et.Element("p1"), "\n", "\n", et.Element("p2")]
+>>> new_list = xmlhelper.Transformer._flatten(wild_list)
+>>> len(new_list)
+3
+>>> bprint(new_list[1].tag)
+p1
+>>> bprint(new_list[0])
+abcde
 
 .. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:
