@@ -2,14 +2,11 @@
 Changelog for XMLservices
 *************************
 
-0.17.2
+0.17.1
 ======
 
 Bugfix: If multiple (> 3) strings occurred in a row in ``_flatten``,
 some elements were skipped.
-
-0.17.1
-======
 
 FollowingNodesIterator.
 
