@@ -13,7 +13,7 @@ from copy import deepcopy
 
 from lxml import etree as et
 
-__version__ = "0.17.2"
+__version__ = "0.17.1"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
