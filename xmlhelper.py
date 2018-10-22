@@ -13,7 +13,7 @@ from copy import deepcopy
 
 from lxml import etree as et
 
-__version__ = "0.17.1"
+__version__ = "0.18.0"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -1407,3 +1407,39 @@ def delat(el, attname):
         del el.attrib[attname]
     except KeyError:
         pass
+
+def switch(el1, el2):
+    """
+    Switch places of ``el1`` and ``el2``.
+    """
+    if el1 is el2:
+        return
+    parent1 = el1.getparent()
+    if parent1 is None:
+        raise XMLHelperError("Cannot switch with root element.")
+    parent2 = el2.getparent()
+    if parent2 is None:
+        raise XMLHelperError("Cannot switch with root element.")
+    if contains(el1, el2) or contains(el2, el1):
+        raise XMLHelperError("Cannot switch nested elements.")
+    pos1 = parent1.index(el1)
+    pos2 = parent2.index(el2)
+    parent1.insert(pos1, el2)
+    # We need the following call to remove in order to keep positioning
+    # correct, if both elements are children of the same parent.
+    parent1.remove(el1)
+    parent2.insert(pos2, el1)
+    tmp = el1.tail
+    el1.tail = el2.tail
+    el2.tail = tmp
+
+def contains(el1, el2):
+    """
+    Is ``el2`` descendant of ``el1``?
+    """
+    parent = el2.getparent()
+    while parent is not None:
+        if parent is el1:
+            return True
+        parent = parent.getparent()
+    return False

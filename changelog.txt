@@ -2,6 +2,13 @@
 Changelog for XMLservices
 *************************
 
+0.18.0
+======
+
+Let two elements switch their places. Tails stay where they are.
+
+Check if one element contains another.
+
 0.17.1
 ======
 

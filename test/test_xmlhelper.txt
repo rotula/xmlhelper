@@ -17,7 +17,7 @@ Taken from
 ...         s = s.decode()
 ...     print(s)
 >>> xmlhelper.__version__
-'0.17.1'
+'0.18.0'
 
 2. get_text(el, skip_els, repl)
 ===============================
@@ -1273,5 +1273,59 @@ abcdef
 p1
 >>> bprint(new_list[0])
 abcde
+
+38. contains(el1, el2)
+======================
+
+>>> doc = et.fromstring("<doc><a><b><c/></b></a><d/></doc>")
+>>> a = doc.find("a")
+>>> b = doc.find("./a/b")
+>>> c = doc.find("./a/b/c")
+>>> d = doc.find("d")
+>>> xmlhelper.contains(a, b)
+True
+>>> xmlhelper.contains(a, c)
+True
+>>> xmlhelper.contains(a, d)
+False
+
+39. Switch elements
+===================
+
+>>> doc = et.fromstring("<doc>x<a/>y<b/>z</doc>")
+>>> a = doc.find("a")
+>>> b = doc.find("b")
+>>> xmlhelper.switch(a, b)
+>>> bprint(et.tostring(doc))
+<doc>x<b/>y<a/>z</doc>
+
+>>> doc = et.fromstring("<doc><a>ab<h/><i/>c<c>...</c>def<f/>g<g/>h<d><e/></d>ghi</a></doc>")
+>>> c = doc.find("./a/c")
+>>> d = doc.find("./a/d")
+>>> xmlhelper.switch(c, d)
+>>> bprint(et.tostring(doc))
+<doc><a>ab<h/><i/>c<d><e/></d>def<f/>g<g/>h<c>...</c>ghi</a></doc>
+
+>>> doc = et.fromstring("<doc><a>ab<h/><i/>c<c>...</c>def<f/>g<g/>h<d><e/></d>ghi</a></doc>")
+>>> c = doc.find("./a/c")
+>>> d = doc.find("./a/d")
+>>> xmlhelper.switch(d, c)
+>>> bprint(et.tostring(doc))
+<doc><a>ab<h/><i/>c<d><e/></d>def<f/>g<g/>h<c>...</c>ghi</a></doc>
+
+>>> doc = et.fromstring("<doc>x<a/>y<b/>z</doc>")
+>>> a = doc.find("a")
+>>> xmlhelper.switch(doc, a)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Cannot switch with root element.
+
+>>> doc = et.fromstring("<doc>x<a><c/></a>y<b/>z</doc>")
+>>> a = doc.find("a")
+>>> c = doc.find("a/c")
+>>> xmlhelper.switch(a, c)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Cannot switch nested elements.
 
 .. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:
