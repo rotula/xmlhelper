@@ -2,6 +2,8 @@
 TODO
 ****
 
+- Make ``xmlhelper.Transformer._append_to`` a static method.
+
 - Deal with comments and processing instructions. This is only partly
   done by now. ``count_characters`` and ``get_text`` work correctly.
 
