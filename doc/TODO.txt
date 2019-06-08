@@ -2,12 +2,6 @@
 TODO
 ****
 
-- Make ``xmlhelper.Transformer._append_to`` a static method, so that
-  it can be reused more easily (?).
-
-- Make ``xmlhelper.Transformer._append_to`` return the ``target``,
-  so that it can be used directly in a return statement.
-
 - Introduce a default transformation method that calls methods named
   like the tagname of the element (if they exist).
 

@@ -13,7 +13,7 @@ from copy import deepcopy
 
 from lxml import etree as et
 
-__version__ = "0.18.0"
+__version__ = "0.19.0"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -488,10 +488,11 @@ class Transformer(object):
         ret.tail = None
         return ret
 
-    def _append_to(self, target, stuff):
+    @staticmethod
+    def _append_to(target, stuff):
         """Append ``stuff`` to ``target``"""
         if stuff is None:
-            return
+            return target
         if isinstance(target, list):
             if isinstance(stuff, list):
                 target.extend(stuff)
@@ -506,11 +507,12 @@ class Transformer(object):
                     newtail = (target[-1].tail or "") + stuff
                     target[-1].tail = newtail
             elif isinstance(stuff, list):
-                flattened = self._flatten(stuff)
+                flattened = Transformer._flatten(stuff)
                 for item in flattened:
-                    self._append_to(target, item)
+                    Transformer._append_to(target, item)
             else:
                 target.append(stuff)
+        return target
 
     @staticmethod
     def _flatten(wild_list):
@@ -605,7 +607,6 @@ class Transformer(object):
         """Transform all children of ``element`` and append to ``target``"""
         ret = []
         for child_node in AllChildNodesIterator(element):
-            # self._append_to(target, self._transform_node(child_node))
             if not child_node in self.skip_nodes:
                 # ret.append(self._transform_node(child_node))
                 self._append_to(ret, self._transform_node(child_node))

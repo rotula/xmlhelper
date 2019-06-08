@@ -2,6 +2,16 @@
 Changelog for XMLservices
 *************************
 
+0.19.0
+======
+
+Turned ``xmlhelper.Transformer._append_to`` into a static method,
+which might be better for reuse.
+
+Also ``xmlherlper.Transformer._append_to`` now returns the given
+target object. This makes writing some simple transformations
+more convenient.
+
 0.18.0
 ======
 

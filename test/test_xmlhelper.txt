@@ -17,7 +17,7 @@ Taken from
 ...         s = s.decode()
 ...     print(s)
 >>> xmlhelper.__version__
-'0.18.0'
+'0.19.0'
 
 2. get_text(el, skip_els, repl)
 ===============================
@@ -1232,7 +1232,33 @@ remove the element ``todel``, and remove the surrounding tags of ``wrap``
 >>> bprint(et.tostring(m.transform()))
 <doc><newname/>abcdefgh<x/>ij</doc>
 
-37. Efficiently reduce a list
+37. Helpers with writing Transformers
+=====================================
+
+>>> a = et.Element("a")
+>>> target = [a, "text"]
+>>> ret = xmlhelper.Transformer._append_to(target, "othertext")
+>>> bprint(ret[0].tag)
+a
+>>> bprint(ret[1])
+text
+>>> bprint(ret[2])
+othertext
+>>> target = a
+>>> ret = xmlhelper.Transformer._append_to(target, "text")
+>>> bprint(ret.tag)
+a
+>>> bprint(ret.text)
+text
+>>> target = et.fromstring("<a><b/></a>")
+>>> ret = xmlhelper.Transformer._append_to(target, "text")
+>>> bprint(et.tostring(ret))
+<a><b/>text</a>
+>>> ret = xmlhelper.Transformer._append_to(target, et.Element("c"))
+>>> bprint(et.tostring(ret))
+<a><b/>text<c/></a>
+
+38. Efficiently reduce a list
 =============================
 
 >>> wild_list = [et.Element("x"), "abc", "def"]
@@ -1274,7 +1300,7 @@ p1
 >>> bprint(new_list[0])
 abcde
 
-38. contains(el1, el2)
+39. contains(el1, el2)
 ======================
 
 >>> doc = et.fromstring("<doc><a><b><c/></b></a><d/></doc>")
@@ -1289,7 +1315,7 @@ True
 >>> xmlhelper.contains(a, d)
 False
 
-39. Switch elements
+40. Switch elements
 ===================
 
 >>> doc = et.fromstring("<doc>x<a/>y<b/>z</doc>")
