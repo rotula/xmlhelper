@@ -1101,6 +1101,8 @@ em: 2: ' text.'
 >>> tn = xmlhelper.TextNode(doc.text, doc)
 >>> bprint(tn.text)
 abc
+>>> len(tn)
+3
 >>> bprint(tn.getparent().tag)
 doc
 >>> bprint(tn.getnext().tag)
@@ -1115,6 +1117,45 @@ True
 True
 >>> tn.getnext() is None
 True
+
+Two TextNodes only compare equal if they share the same text, the same
+parent, and the same previous element (i. e., they are at the represent
+the exact same text passage in an XML document).
+
+>>> tn1 = xmlhelper.TextNode("Hello", et.Element("doc"), et.Element("a"))
+>>> tn2 = xmlhelper.TextNode("Hullo", et.Element("doc"), et.Element("a"))
+>>> tn3 = xmlhelper.TextNode("Hullo", et.Element("doc"), et.Element("b"))
+>>> tn4 = xmlhelper.TextNode("Hullo", et.Element("doc"), et.Element("b"))
+>>> tn1 == tn2
+False
+>>> tn1 != tn2
+True
+>>> tn2 != tn3
+True
+>>> tn3 == tn4
+False
+
+NB: Even if ``tn3`` and ``tn4`` are defined in exactly the same way, the
+parent and the previous elements of course are different objecdts that just
+happen to have the same tagname.
+
+>>> tn1 == tn1
+True
+
+TextNodes can be hashed and therefore be used as dictionary keys:
+
+>>> d = {tn1: "oh, hello!"}
+>>> bprint(d[tn1])
+oh, hello!
+
+If you are iterating over different kinds of nodes and need to identify
+a TextNode, you can either use ``isinstance`` or you can call the ``tag``
+method which returns the type ``TextNode``, which is similar to the behavior
+of lxml regarding processing instructions.
+
+>>> tn = xmlhelper.TextNode("Hello", et.Element("doc"))
+>>> tn.tag()
+<class 'xmlhelper.TextNode'>
 
 34. Iterate over children (including text nodes)
 ================================================
@@ -1344,6 +1385,39 @@ abcdef
 p1
 >>> bprint(new_list[0])
 abcde
+>>> wild_list = [9,]
+>>> try:
+...     xmlhelper.Transformer._flatten(wild_list)
+... except xmlhelper.TransformerError as e:
+...     bprint(str(e)[0:13])
+Unknown type:
+>>> wild_list = ["abc", "def"]
+>>> new_list = xmlhelper.Transformer._flatten(wild_list)
+>>> len(new_list)
+1
+>>> bprint(new_list[0])
+abcdef
+
+Other default transformation methods
+++++++++++++++++++++++++++++++++++++
+
+Usually you will not encounter a node that is ``None``, since even if the current
+element's ``text`` or ``tail`` property is ``None``, this will always be treated
+as a TextNode with an empty text. But if you use a different iterator or for any
+other reason encounter a ``None`` node, you will find that there is a default
+transformation which (not surprisingly) returns ``None``. By default this is called
+from ``_transform_node``.
+
+>>> t = xmlhelper.Transformer(et.Element("doc"))
+>>> t._transform_node(None) is None
+True
+
+There is a default ``_copy`` method which returns a ``deepcopy`` of the element.
+Currently this is not used anywhere.
+
+>>> ret = t._copy(et.Element("doc"))
+>>> bprint(ret.tag)
+doc
 
 39. contains(el1, el2)
 ======================
@@ -1391,6 +1465,13 @@ Traceback (most recent call last):
 ...
 XMLHelperError: Cannot switch with root element.
 
+>>> doc = et.fromstring("<doc>x<a/>y<b/>z</doc>")
+>>> a = doc.find("a")
+>>> xmlhelper.switch(a, doc)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Cannot switch with root element.
+
 >>> doc = et.fromstring("<doc>x<a><c/></a>y<b/>z</doc>")
 >>> a = doc.find("a")
 >>> c = doc.find("a/c")
@@ -1398,5 +1479,11 @@ XMLHelperError: Cannot switch with root element.
 Traceback (most recent call last):
 ...
 XMLHelperError: Cannot switch nested elements.
+
+If you want to switch an element with itself, nothing happens:
+
+>>> doc = et.fromstring("<doc><a/></doc>")
+>>> a = doc.find("a")
+>>> xmlhelper.switch(a, a)
 
 .. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:
