@@ -577,7 +577,18 @@ class Transformer(object):
         The default is to just call the default transformtion,
         which basically produces a copy of the element.
         """
+        convenience_method = self._find_default_method(element)
+        if convenience_method is not None:
+            return convenience_method(element)
         return self._default_element_transformation(element)
+
+    def _find_default_method(self, element):
+        name = element.tag
+        if name.startswith("{"):
+            endpos = name.find("}")
+            name = name[endpos+1:]
+        name = "_convert_" + name
+        return getattr(self, name, None)
 
     def _default_element_transformation(self, element):
         """Default transformation of an element.

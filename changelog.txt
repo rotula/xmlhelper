@@ -12,6 +12,10 @@ Also ``xmlherlper.Transformer._append_to`` now returns the given
 target object. This makes writing some simple transformations
 more convenient.
 
+Default transformation first tries to call a method called
+``_convert_`` followed by the local part of the tagname of the
+given element. This helps avoid multiple ``elif`` statements.
+
 0.18.0
 ======
 

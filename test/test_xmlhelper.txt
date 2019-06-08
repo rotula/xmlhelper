@@ -1232,8 +1232,53 @@ remove the element ``todel``, and remove the surrounding tags of ``wrap``
 >>> bprint(et.tostring(m.transform()))
 <doc><newname/>abcdefgh<x/>ij</doc>
 
-37. Helpers with writing Transformers
+37. Convenience methods
+=======================
+
+Whenever the Transformer encounters an element it first tries to find a method
+with the same name as the element's tagname, without the namespace part, but with
+the prefix ``_convert_``. Thus, to transform an element named ``p``, you have to
+implement a method called ``_convert_p`` (method lookup is case sensitive). This
+method will be called. If no such method can be found, the Transformer calls
+``_default_element_transformation``. If you decide to overwrite ``_transform_element``,
+you have full control over the transformation process. You can first do your own
+stuff, and then fall back on the default dispatcher by obtaining the method if
+present by calling ``_find_default_method``. If this returns ``None``, no default
+method can be found. Then you should call ``_default_element_transformation``.
+
+>>> doc = et.fromstring("<doc/>")
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _convert_doc(self, element):
+...         return et.Element("new")
+>>> m = MyTransformer(doc)
+>>> bprint(et.tostring(m.transform()))
+<new/>
+
+>>> doc = et.fromstring("<doc><p/></doc>")
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _convert_p(self, element):
+...         return et.Element("new")
+>>> m = MyTransformer(doc)
+>>> bprint(et.tostring(m.transform()))
+<doc><new/></doc>
+
+Only the local part of the tagname counts. Thus, if you have elements with the same
+name but different namespace in your original document, the same method will be
+called. This is a rare case, but still needs to be remembered.
+
+>>> doc = et.fromstring("<doc xmlns='https://example.com/ns/'><p/></doc>")
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _convert_p(self, element):
+...         return et.Element("{https://example.com/ns/}new")
+>>> m = MyTransformer(doc)
+>>> bprint(et.tostring(m.transform()))
+<doc xmlns="https://example.com/ns/"><new/></doc>
+
+38. Helpers with writing Transformers
 =====================================
+
+Append to lists or elements
++++++++++++++++++++++++++++
 
 >>> a = et.Element("a")
 >>> target = [a, "text"]
@@ -1258,8 +1303,8 @@ text
 >>> bprint(et.tostring(ret))
 <a><b/>text<c/></a>
 
-38. Efficiently reduce a list
-=============================
+Efficiently reduce a list
++++++++++++++++++++++++++
 
 >>> wild_list = [et.Element("x"), "abc", "def"]
 >>> new_list = xmlhelper.Transformer._flatten(wild_list)
