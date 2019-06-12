@@ -17,7 +17,7 @@ Taken from
 ...         s = s.decode()
 ...     print(s)
 >>> xmlhelper.__version__
-'0.19.0'
+'0.19.1'
 
 2. get_text(el, skip_els, repl)
 ===============================
@@ -537,6 +537,30 @@ Right strip the text contained in ``el``.
 >>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc)
 >>> (el.tag, text_or_tail)
 ('b', 2)
+>>> doc = et.fromstring("<a>x<b>y</b>z</a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc)
+>>> (el.tag, text_or_tail)
+('b', 1)
+>>> doc = et.fromstring("<a>x<b>y</b>z</a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc, ["b"])
+>>> (el.tag, text_or_tail)
+('b', 2)
+>>> doc = et.fromstring("<a>x<b>y</b><c>z</c></a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc, "b")
+>>> (el.tag, text_or_tail)
+('c', 1)
+>>> doc = et.fromstring("<a>x<b>y</b><c>z</c></a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc, "*")
+>>> (el, text_or_tail)
+(None, None)
+>>> doc = et.fromstring("<a><b><c>x</c></b><d>y</d></a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc[0][0], xmlhelper.TEXT, 1, doc)
+>>> (el.tag, text_or_tail)
+('d', 1)
+>>> doc = et.fromstring("<a><b><c>x</c></b><d/></a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc[0][0], xmlhelper.TEXT, 1, doc)
+>>> (el, text_or_tail)
+(None, None)
 >>> doc = et.fromstring("<a>x<b/><c/><d/>y</a>")
 >>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc)
 >>> (el.tag, text_or_tail)
@@ -1191,7 +1215,8 @@ def
 
 >>> doc = et.fromstring("<doc><a/>abc<b>def</b><c/></doc>")
 >>> a = doc[0]
->>> for n in xmlhelper.FollowingNodesIterator(a):
+>>> fni = xmlhelper.FollowingNodesIterator(a)
+>>> for n in fni:
 ...     if isinstance(n, xmlhelper.TextNode):
 ...         bprint(n.text)
 ...     else:
@@ -1203,6 +1228,10 @@ def
 <c>
 <BLANKLINE>
 <BLANKLINE>
+>>> next(fni)
+Traceback (most recent call last):
+...
+StopIteration
 
 36. ``Transformer``
 ===================
@@ -1272,6 +1301,67 @@ remove the element ``todel``, and remove the surrounding tags of ``wrap``
 >>> m = MyTransformer(doc)
 >>> bprint(et.tostring(m.transform()))
 <doc><newname/>abcdefgh<x/>ij</doc>
+
+If you transform an element, you either have to return a new element, a string,
+or a list consisting of elements or strings.
+
+>>> doc = et.fromstring("<doc><a/></doc>")
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _convert_a(self, element):
+...         return et.Element("b")
+>>> m = MyTransformer(doc)
+>>> bprint(et.tostring(m.transform()))
+<doc><b/></doc>
+
+>>> doc = et.fromstring("<doc><a/></doc>")
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _convert_a(self, element):
+...         return "b"
+>>> m = MyTransformer(doc)
+>>> bprint(et.tostring(m.transform()))
+<doc>b</doc>
+
+>>> doc = et.fromstring("<doc><a/></doc>")
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _convert_a(self, element):
+...         return ["b", et.Element("c")]
+>>> m = MyTransformer(doc)
+>>> bprint(et.tostring(m.transform()))
+<doc>b<c/></doc>
+
+This is how you can transform your document to a string instead of a ElementTree:
+Just return lists of strings, they will be concatenated in the end:
+
+If you create a list of elements from the root element, the Transformer will
+serialize the individual elements and concatenate the strings:
+
+>>> doc = et.fromstring("<doc/>")
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _convert_doc(self, element):
+...         return [et.Element("a"), "b", et.Element("c")]
+>>> m = MyTransformer(doc)
+>>> bprint(m.transform())
+<a/>b<c/>
+
+You can even return things that can be converted to strings:
+
+>>> doc = et.fromstring("<doc/>")
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _convert_doc(self, element):
+...         return [et.Element("a"), 99, et.Element("c")]
+>>> m = MyTransformer(doc)
+>>> bprint(m.transform())
+<a/>99<c/>
+
+But comments etc. will be kept as well:
+
+>>> doc = et.fromstring("<!--comment--><doc/>")
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _convert_doc(self, element):
+...         return [et.Element("a"), 99, et.Element("c")]
+>>> m = MyTransformer(doc)
+>>> bprint(m.transform())
+<!--comment--><a/>99<c/>
 
 37. Convenience methods
 =======================
@@ -1418,6 +1508,27 @@ Currently this is not used anywhere.
 >>> ret = t._copy(et.Element("doc"))
 >>> bprint(ret.tag)
 doc
+
+ID index
+++++++++
+
+Whenever you call the main ``transform`` method, an indexing routine will be called (``index``).
+The default behavior of which is to iterate over all elements and record their ``xml:id``, if
+any. Thus, in all further transformation steps you can easily address elements by their ``xml:id``.
+If you ever want to override the ``index`` method, make sure to build the ID dictionary if
+needed. If you iterate over the document using the built-in index iterator ``index_iter``,
+this will be done for you.
+
+>>> doc = et.fromstring("<doc><a xml:id='a001'><b xml:id='a002'/></a></doc>")
+>>> t = xmlhelper.Transformer(doc)
+>>> t.index()
+>>> e = t.get_element_by_id("a002")
+>>> bprint(e.tag)
+b
+>>> t.get_element_by_id("xxx")  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+TransformerNotFoundError: ID xxx not found.
 
 39. contains(el1, el2)
 ======================

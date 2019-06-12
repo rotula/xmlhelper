@@ -13,7 +13,7 @@ from copy import deepcopy
 
 from lxml import etree as et
 
-__version__ = "0.19.0"
+__version__ = "0.19.1"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -261,7 +261,7 @@ class FollowingNodesIterator(object):
 
     def next(self):
         if self.b_done:
-            return True
+            raise StopIteration
         if (self.current_node == self.start_node
                 or isinstance(self.current_node, TextNode)):
             ret = self._getnext(self.current_node)
@@ -397,7 +397,20 @@ class Transformer(object):
         self.index()
         ret = self._transform_document()
         ret = self._post_processing(ret)
-        return et.ElementTree(ret)
+        try:
+            return et.ElementTree(ret)
+        except:
+            # treat ret as a list
+            output = []
+            for e in ret:
+                if isinstance(e, (str, unitext)):
+                    output.append(e)
+                else:
+                    try:
+                        output.append(et.tostring(e, encoding="unicode"))
+                    except:
+                        output.append(unitext(e))
+            return u"".join(output)
 
     def _preprocessing(self):
         """"Hook for any preliminary processing needed."""
@@ -447,11 +460,12 @@ class Transformer(object):
         return ret
 
     def _addprevious(self, target, node):
-        """Add ``node`` before ``target``"""
+        """
+        Add ``node`` before ``target`` if ``target`` is an element.
+        If it is a list, just add the ``node`` as the first element of the
+        list.
+        """
         if isinstance(target, list):
-            # @@@TODO:
-            # This doesn't seem right. If it is,
-            # we need to explain it.
             target.insert(0, node)
         else:
             target.addprevious(node)
@@ -993,6 +1007,7 @@ def goto_next_char(el, text_or_tail, pos, container, skip_els=[]):
     # the trivial case did not work
     parent = el.getparent()
     if parent is None:
+        # NB: This cannot happen.
         return None, None
     idx = parent.index(el)
     if idx + 1 < len(parent):
@@ -1018,6 +1033,7 @@ def goto_next_char(el, text_or_tail, pos, container, skip_els=[]):
         else:
             txt = newel.tail or ""
         if txt == "":
+            # NB: This cannot happen.
             return None, None
         else:
             return newel, newtext_or_tail
