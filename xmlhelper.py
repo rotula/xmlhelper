@@ -7,7 +7,7 @@ with lxml
 """
 try:
     from builtins import str as unitext  # python 2/3
-except ImportError:
+except ImportError:  # pragma: no cover
     unitext = unicode
 from copy import deepcopy
 
@@ -26,67 +26,68 @@ TAIL = 2
 #          maybe make two lists, one for XML and one
 #          for RDF
 
-ns = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main",
-        "ct": "http://schemas.openxmlformats.org/package/2006/content-types",
-        "dbpedia": "http://dbpedia.org/resource/",
-        "dbpedia-owl": "http://dbpedia.org/ontology/",
-        "dbpprop": "http://dbpedia.org/property/",
-        "dc": "http://purl.org/dc/elements/1.1/",
-        "dcam": "http://purl.org/dc/dcam/",
-        "dcterms": "http://purl.org/dc/terms/",
-        "dctype": "http://purl.org/dc/dcmitype/",
-        "dmgh": "http://www.mgh.de/ns/dmgh/",
-        "docxm": "http://schemas.openxmlformats.org/officeDocument/2006/math",
-        "dv": "http://dfg-viewer.de/",
-        "exif": "http://www.w3.org/2003/12/exif/ns",
-        "fo": "http://www.w3.org/1999/XSL/Format",
-        "foaf": "http://xmlns.com/foaf/0.1/",
-        "frbr": "http://purl.org/vocab/frbr/core#",
-        "ftr": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer",
-        "geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
-        "geonames": "http://www.geonames.org/ontology#",
-        "georss": "http://www.georss.org/georss",
-        "geosparql": "http://www.opengis.net/ont/geosparql#",
-        "gml": "http://www.opengis.net/gml",
-        "gndo": "http://d-nb.info/standards/elementset/gnd#",
-        "hdr": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header",
-        "html": "http://www.w3.org/1999/xhtml",
-        "ical": "http://www.w3.org/2002/12/cal/ical#",
-        "kml": "http://www.opengis.net/kml/2.2",
-        "m": "http://www.w3.org/1998/Math/MathML",
-        "mets": "http://www.loc.gov/METS/",
-        "mgh": "http://www.mgh.de/ns/mgh/",
-        "mix": "http://www.loc.gov/mix/v10",
-        "mods": "http://www.loc.gov/mods/v3",
-        "o": "urn:schemas-microsoft-com:office:office",
-        "oai": "http://www.openarchives.org/OAI/2.0/",
-        "oai_dc": "http://www.openarchives.org/OAI/2.0/oai_dc/",
-        "openSearch": "http://a9.com/-/spec/opensearchrss/1.0/",
-        "owl": "http://www.w3.org/2002/07/owl#",
-        "packrel":  "http://schemas.openxmlformats.org/package/2006/relationships",
-        "pic": "http://schemas.openxmlformats.org/drawingml/2006/picture",
-        "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
-        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-        "rdfa": "http://www.w3.org/ns/rdfa#",
-        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-        "rss": "http://purl.org/rss/1.0/",
-        "skos": "http://www.w3.org/2004/02/skos/core#",
-        "svg": "http://www.w3.org/2000/svg",
-        "tei": "http://www.tei-c.org/ns/1.0",
-        "vcard": "http://www.w3.org/2006/vcard/ns#",
-        "v": "urn:schemas-microsoft-com:vml",
-        "ve": "http://schemas.openxmlformats.org/markup-compatibility/2006",
-        "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
-        "w10": "urn:schemas-microsoft-com:office:word",
-        "wne": "http://schemas.microsoft.com/office/word/2006/wordml",
-        "wot": "http://xmlns.com/wot/0.1/",
-        "wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing",
-        "xlink": "http://www.w3.org/1999/xlink",
-        "xml": "http://www.w3.org/XML/1998/namespace",
-        "xs": "http://www.w3.org/2001/XMLSchema",
-        "xsi": "http://www.w3.org/2001/XMLSchema-instance",
-        "xsl": "http://www.w3.org/1999/XSL/Transform",
-        }
+ns = {
+    "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
+    "ct": "http://schemas.openxmlformats.org/package/2006/content-types",
+    "dbpedia": "http://dbpedia.org/resource/",
+    "dbpedia-owl": "http://dbpedia.org/ontology/",
+    "dbpprop": "http://dbpedia.org/property/",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "dcam": "http://purl.org/dc/dcam/",
+    "dcterms": "http://purl.org/dc/terms/",
+    "dctype": "http://purl.org/dc/dcmitype/",
+    "dmgh": "http://www.mgh.de/ns/dmgh/",
+    "docxm": "http://schemas.openxmlformats.org/officeDocument/2006/math",
+    "dv": "http://dfg-viewer.de/",
+    "exif": "http://www.w3.org/2003/12/exif/ns",
+    "fo": "http://www.w3.org/1999/XSL/Format",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "frbr": "http://purl.org/vocab/frbr/core#",
+    "ftr": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer",
+    "geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
+    "geonames": "http://www.geonames.org/ontology#",
+    "georss": "http://www.georss.org/georss",
+    "geosparql": "http://www.opengis.net/ont/geosparql#",
+    "gml": "http://www.opengis.net/gml",
+    "gndo": "http://d-nb.info/standards/elementset/gnd#",
+    "hdr": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header",
+    "html": "http://www.w3.org/1999/xhtml",
+    "ical": "http://www.w3.org/2002/12/cal/ical#",
+    "kml": "http://www.opengis.net/kml/2.2",
+    "m": "http://www.w3.org/1998/Math/MathML",
+    "mets": "http://www.loc.gov/METS/",
+    "mgh": "http://www.mgh.de/ns/mgh/",
+    "mix": "http://www.loc.gov/mix/v10",
+    "mods": "http://www.loc.gov/mods/v3",
+    "o": "urn:schemas-microsoft-com:office:office",
+    "oai": "http://www.openarchives.org/OAI/2.0/",
+    "oai_dc": "http://www.openarchives.org/OAI/2.0/oai_dc/",
+    "openSearch": "http://a9.com/-/spec/opensearchrss/1.0/",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "packrel":  "http://schemas.openxmlformats.org/package/2006/relationships",
+    "pic": "http://schemas.openxmlformats.org/drawingml/2006/picture",
+    "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfa": "http://www.w3.org/ns/rdfa#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "rss": "http://purl.org/rss/1.0/",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "svg": "http://www.w3.org/2000/svg",
+    "tei": "http://www.tei-c.org/ns/1.0",
+    "vcard": "http://www.w3.org/2006/vcard/ns#",
+    "v": "urn:schemas-microsoft-com:vml",
+    "ve": "http://schemas.openxmlformats.org/markup-compatibility/2006",
+    "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
+    "w10": "urn:schemas-microsoft-com:office:word",
+    "wne": "http://schemas.microsoft.com/office/word/2006/wordml",
+    "wot": "http://xmlns.com/wot/0.1/",
+    "wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing",
+    "xlink": "http://www.w3.org/1999/xlink",
+    "xml": "http://www.w3.org/XML/1998/namespace",
+    "xs": "http://www.w3.org/2001/XMLSchema",
+    "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+    "xsl": "http://www.w3.org/1999/XSL/Transform",
+}
 
 class XMLHelperError(Exception):
     """Exception"""
@@ -114,7 +115,7 @@ class FollowingIterator(object):
         return self
 
     def __next__(self):
-        return self.next()
+        return self.next()  # pragma: no cover
 
     def next(self):
         """
@@ -170,7 +171,7 @@ class PrecedingIterator(object):
         return self
 
     def __next__(self):
-        return self.next()
+        return self.next()  # pragma: no cover
 
     def next(self):
         """
@@ -222,7 +223,7 @@ class AllChildNodesIterator(object):
         return self
     
     def __next__(self):
-        return self.next()
+        return self.next()  # pragma: no cover
 
     def next(self):
         if self.current_node is None:
@@ -250,7 +251,7 @@ class FollowingNodesIterator(object):
         return self
 
     def __next__(self):
-        return self.next()
+        return self.next()  # pragma: no cover
 
     def _getnext(self, e):
         if isinstance(e, TextNode):
@@ -337,6 +338,12 @@ class TextNode(object):
     def __len__(self):
         return len(self.text)
 
+    def __repr__(self):
+        return u"TextNode('{}')".format(self.text)
+
+    def __str__(self):
+        return self.text
+
 class TransformerError(XMLHelperError):
     pass
 
@@ -347,6 +354,10 @@ class Transformer(object):
     """Basic infrastructure for a simple XML transformer
     """
 
+    # the input ElementTree
+    input_doc = None
+    # the root Element
+    root = None
     # dictionary for index
     _ids = None
     # skip processing instructions?
@@ -379,6 +390,12 @@ class Transformer(object):
                 self.skip_comments = v
             elif k == "strip_namespaces":
                 self.strip_namespaces = v
+
+    def __repr__(self):
+        return u"Transformer({})".format(self.input_doc)
+
+    def __str__(self):
+        return self.__repr__()
 
     def _get_front_nodes(self):
         """Return list of nodes in front of the root node
@@ -690,6 +707,12 @@ class Indenter(object):
         self.shiftwidth = shiftwidth
         self.textwidth = textwidth
         self.b_wrap = b_wrap_text
+
+    def __repr__(self):
+        return u"Indenter({})".format(self.doc)
+
+    def __str__(self):
+        return self.__repr__()
 
     def indent(self):
         """
@@ -1006,9 +1029,9 @@ def goto_next_char(el, text_or_tail, pos, container, skip_els=[]):
         return el, TAIL
     # the trivial case did not work
     parent = el.getparent()
-    if parent is None:
-        # NB: This cannot happen.
-        return None, None
+    # if parent is None:
+    #     # NB: This cannot happen.
+    #     return None, None
     idx = parent.index(el)
     if idx + 1 < len(parent):
         nextel = parent[idx + 1]
@@ -1032,11 +1055,11 @@ def goto_next_char(el, text_or_tail, pos, container, skip_els=[]):
             txt = newel.text or ""
         else:
             txt = newel.tail or ""
-        if txt == "":
-            # NB: This cannot happen.
-            return None, None
-        else:
-            return newel, newtext_or_tail
+        # if txt == "":
+        #     # NB: This cannot happen.
+        #     return None, None
+        # else:
+        return newel, newtext_or_tail
     return None, None
 
 def count_characters(el, skip_els=[]):

@@ -1070,6 +1070,11 @@ Indentation can also be done on a complete ElementTree:
   <p/>
 </html>
 
+>>> doc = et.fromstring("<doc/>")
+>>> indenter = xmlhelper.Indenter(doc)
+>>> print(indenter)  # doctest: +ELLIPSIS
+Indenter(<Element doc at ...>)
+
 31. Testing for linebreaks
 ==========================
 
@@ -1181,6 +1186,12 @@ of lxml regarding processing instructions.
 >>> tn.tag()
 <class 'xmlhelper.TextNode'>
 
+>>> tn = xmlhelper.TextNode("Hello", et.Element("doc"))
+>>> print(tn)
+Hello
+>>> print(tn.__repr__())
+TextNode('Hello')
+
 34. Iterate over children (including text nodes)
 ================================================
 
@@ -1246,6 +1257,8 @@ a root element.
 
 >>> t = xmlhelper.Transformer(doc)
 >>> t = xmlhelper.Transformer(doctree)
+>>> print(t)  # doctest: +ELLIPSIS
+Transformer(<lxml.etree._ElementTree object at ...>)
 
 The default is to just return a copy of the tree.
 
