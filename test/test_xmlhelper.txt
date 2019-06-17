@@ -1376,6 +1376,31 @@ But comments etc. will be kept as well:
 >>> bprint(m.transform())
 <!--comment--><a/>99<c/>
 
+Extract some information from an XML document:
+
+>>> doc = et.fromstring("<doc><a>xxx</a><b>yyy</b><a>zzz</a></doc>")
+>>> class MyTransformer(xmlhelper.Transformer):
+...     def _convert_a(self, a):
+...         return a.text
+...     def _default_element_transformation(self, e):
+...         return self._append_to([], self._transform_children(e))
+...     def _transform_node(self, node):
+...         if isinstance(node, et._Element):
+...             return self._transform_element(node)
+>>> m = MyTransformer(doc)
+>>> bprint(m.transform())
+xxxzzz
+
+NB: Of course, the previous example is overly complicated. It could be done
+without effort using the document iterator provided by ``lxml``:
+
+>>> doc = et.fromstring("<doc><a>xxx</a><b>yyy</b><a>zzz</a></doc>")
+>>> ret = []
+>>> for e in doc.iter("a"):
+...     ret.append(e.text)
+>>> bprint(u"".join(ret))
+xxxzzz
+
 37. Convenience methods
 =======================
 
