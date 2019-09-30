@@ -2,6 +2,11 @@
 Changelog for XMLservices
 *************************
 
+0.20
+====
+
+Strip namespace part from tagname.
+
 0.19.1
 ======
 

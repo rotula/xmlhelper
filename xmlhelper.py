@@ -13,7 +13,7 @@ from copy import deepcopy
 
 from lxml import etree as et
 
-__version__ = "0.19.1"
+__version__ = "0.20"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -614,10 +614,7 @@ class Transformer(object):
         return self._default_element_transformation(element)
 
     def _find_default_method(self, element):
-        name = element.tag
-        if name.startswith("{"):
-            endpos = name.find("}")
-            name = name[endpos+1:]
+        name = strip_namespace_from_tagname(element.tag)
         name = "_convert_" + name
         return getattr(self, name, None)
 
@@ -1494,3 +1491,9 @@ def contains(el1, el2):
             return True
         parent = parent.getparent()
     return False
+
+def strip_namespace_from_tagname(tagname):
+    if tagname.startswith("{"):
+        endpos = tagname.find("}")
+        return tagname[endpos+1:]
+    return tagname

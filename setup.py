@@ -7,7 +7,7 @@ Setup for XML helper
 
 from distutils.core import setup
 setup(name="xmlhelper",
-      version="0.19.1",
+      version="0.20",
       author="Clemens Radl",
       author_email="clemens.radl@googlemail.com",
       url="http://www.clemens-radl.de/soft/xmlhelper/",

@@ -17,7 +17,7 @@ Taken from
 ...         s = s.decode()
 ...     print(s)
 >>> xmlhelper.__version__
-'0.19.1'
+'0.20'
 
 2. get_text(el, skip_els, repl)
 ===============================
@@ -1634,5 +1634,12 @@ If you want to switch an element with itself, nothing happens:
 >>> doc = et.fromstring("<doc><a/></doc>")
 >>> a = doc.find("a")
 >>> xmlhelper.switch(a, a)
+
+41. Strip namespace part from tagname
+=====================================
+
+>>> tagname = "{http://namespace/}tag"
+>>> bprint(xmlhelper.strip_namespace_from_tagname(tagname))
+tag
 
 .. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:
