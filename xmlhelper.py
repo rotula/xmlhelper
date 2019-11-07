@@ -13,7 +13,7 @@ from copy import deepcopy
 
 from lxml import etree as et
 
-__version__ = "0.20.0"
+__version__ = "0.21.0"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -1419,14 +1419,20 @@ def get_xpath_index(el):
     """
     Get the index of ``el`` within its siblings sharing the same tag name.
     """
+    if isinstance(el, TextNode) and el.empty:
+        raise XMLHelperError("Cannot determine XPath for empty TextNode.")
     parent = el.getparent()
     if parent is None:
         return 1
     cnt = 1
-    for child in parent:
+    for child in AllChildNodesIterator(parent):
         if child == el:
             return cnt
-        if child.tag == el.tag:
+        if isinstance(el, TextNode):
+            if isinstance(child, TextNode):
+                if not child.empty:
+                    cnt += 1
+        elif child.tag == el.tag:
             cnt += 1
 
 def get_xpath(el):
@@ -1439,7 +1445,9 @@ def get_xpath(el):
     while parent is not None:
         # pos = parent.index(current_el)
         pos = get_xpath_index(current_el)
-        ret.append((current_el.tag, pos))
+        xpath_component = "text()" if isinstance(current_el, TextNode)\
+            else current_el.tag
+        ret.append((xpath_component, pos))
         current_el = parent
         parent = current_el.getparent()
     ret.append((current_el.tag, 1))  # is always the root element

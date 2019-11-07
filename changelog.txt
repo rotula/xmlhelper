@@ -2,6 +2,11 @@
 Changelog for XMLservices
 *************************
 
+0.21.0
+======
+
+Allow TextNodes as arguments to ``get_xpath``.
+
 0.20.0
 ======
 

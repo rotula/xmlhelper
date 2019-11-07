@@ -17,7 +17,7 @@ Taken from
 ...         s = s.decode()
 ...     print(s)
 >>> xmlhelper.__version__
-'0.20.0'
+'0.21.0'
 
 2. get_text(el, skip_els, repl)
 ===============================
@@ -886,6 +886,21 @@ Get the index of ``el`` within its siblings sharing the same tag name.
 >>> xmlhelper.get_xpath_index(a)
 1
 
+TextNodes work, too:
+
+>>> doc = et.fromstring("<doc>one<b>one</b><a/>two</doc>")
+>>> tn = xmlhelper.TextNode(doc[-1].tail, doc, doc[-1])
+>>> xmlhelper.get_xpath_index(tn)
+2
+
+But there are no xpaths for empty TextNodes:
+
+>>> tn = xmlhelper.TextNode(doc[0].tail, doc, doc[0])
+>>> xmlhelper.get_xpath_index(tn)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+XMLHelperError: Cannot determine XPath for empty TextNode.
+
 24. get_xpath(el)
 =================
 
@@ -897,6 +912,13 @@ Return xpath of given element relative to document root.
 '/doc[1]/a[2]/b[1]'
 >>> xmlhelper.get_xpath(doc)
 '/doc[1]'
+
+TextNodes work, too:
+
+>>> doc = et.fromstring("<doc>one<b>one</b><a/>two</doc>")
+>>> tn = xmlhelper.TextNode(doc[-1].tail, doc, doc[-1])
+>>> xmlhelper.get_xpath(tn)
+'/doc[1]/text()[2]'
 
 25. delat(el, attname)
 ======================
