@@ -1170,7 +1170,7 @@ True
 True
 
 Two TextNodes only compare equal if they share the same text, the same
-parent, and the same previous element (i. e., they are at the represent
+parent, and the same previous element (i. e., they are represent
 the exact same text passage in an XML document).
 
 >>> tn1 = xmlhelper.TextNode("Hello", et.Element("doc"), et.Element("a"))
@@ -1193,7 +1193,15 @@ happen to have the same tagname.
 >>> tn1 == tn1
 True
 
-TextNodes can be hashed and therefore be used as dictionary keys:
+>>> doc = et.fromstring("<doc>one<a/>two<a/>three</doc>")
+>>> tn1 = xmlhelper.TextNode(doc.text, doc)
+>>> tn2 = xmlhelper.TextNode(doc.text, doc)
+>>> tn1 == tn2
+True
+>>> tn1 != tn2
+False
+
+TextNodes can be hashed and therefore can be used as dictionary keys:
 
 >>> d = {tn1: "oh, hello!"}
 >>> bprint(d[tn1])
