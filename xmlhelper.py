@@ -5,15 +5,19 @@
 XML helper: bundles commonly used functions for text processing
 with lxml
 """
+
 try:
     from builtins import str as unitext  # python 2/3
 except ImportError:  # pragma: no cover
     unitext = unicode
 from copy import deepcopy
+from doctest import Example
+import unittest
 
 from lxml import etree as et
+from lxml.doctestcompare import LXMLOutputChecker
 
-__version__ = "0.21.0"
+__version__ = "0.22.0"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -817,6 +821,21 @@ class Indenter(object):
         if nxt.tag in self.block:
             return True
         return False
+
+class XMLTestCase(unittest.TestCase):
+
+    def runTest(self):
+        pass
+
+    def assertXmlEqual(self, got, want):
+        if isinstance(got, (et._Element, et._ElementTree)):
+            got = et.tostring(got).decode()
+        if isinstance(want, (et._Element, et._ElementTree)):
+            want = et.tostring(want).decode()
+        checker = LXMLOutputChecker()
+        if not checker.check_output(want, got, 0):
+            message = checker.output_difference(Example("", want), got, 0)
+            raise AssertionError(message)
 
 def get_text(el, skip_els=[], repl=[]):
     """

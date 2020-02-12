@@ -17,7 +17,7 @@ Taken from
 ...         s = s.decode()
 ...     print(s)
 >>> xmlhelper.__version__
-'0.21.0'
+'0.22.0'
 
 2. get_text(el, skip_els, repl)
 ===============================
@@ -1671,5 +1671,20 @@ If you want to switch an element with itself, nothing happens:
 >>> tagname = "{http://namespace/}tag"
 >>> bprint(xmlhelper.strip_namespace_from_tagname(tagname))
 tag
+
+42. XMLTestCase: unittests with ``assertXmlEqual``
+==================================================
+
+In order to write Unit Tests that have to assert the equality of
+XML documents you need a special method provided by the ``LXMLOutputChecker``.
+
+>>> tc = xmlhelper.XMLTestCase()
+>>> doc1 = et.fromstring("<doc a=\"1\" b=\"2\"/>")
+>>> doc2 = et.fromstring("<doc b=\"2\" a=\"1\"/>")
+>>> tc.assertXmlEqual(doc1, doc2)
+
+You can either supply XML Elements or ElementTrees or just strings.
+
+>>> tc.assertXmlEqual("<doc a=\"1\" b=\"2\"/>", "<doc b=\"2\" a=\"1\"/>")
 
 .. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:
