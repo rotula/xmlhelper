@@ -62,4 +62,7 @@ NB: The current version of epydoc (3.0.1) has incompatibilities with the
     <http://groups.google.com/group/pyglet-commits/browse_thread/thread/e2e9556bcb75f05e?pli=1>
     for details.
 
+    To get a version of epydoc that is patched and runs under both Python 2 and 3,
+    it seems best to use the NLTK version: <https://github.com/nltk/epydoc>.
+
 .. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:
