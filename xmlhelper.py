@@ -17,7 +17,7 @@ import unittest
 from lxml import etree as et
 from lxml.doctestcompare import LXMLOutputChecker
 
-__version__ = "0.22.0"
+__version__ = "0.22.1"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -386,7 +386,7 @@ class Transformer(object):
             self.root = input_doc.getroot()
         self._ids = {}
         self.front_nodes = self._get_front_nodes()
-        self.skip_nodes = []
+        self.skip_nodes = set()
         for (k, v) in kwargs.items():
             if k == "skip_pis":
                 self.skip_pis = v

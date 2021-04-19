@@ -2,6 +2,11 @@
 Changelog for XMLservices
 *************************
 
+0.22.1
+======
+
+Bugfix: Transformer.skip_nodes should be ``set``, not ``list``.
+
 0.22.0
 ======
 
