@@ -17,7 +17,7 @@ Taken from
 ...         s = s.decode()
 ...     print(s)
 >>> xmlhelper.__version__
-'0.22.1'
+'0.22.2'
 
 2. get_text(el, skip_els, repl)
 ===============================
@@ -585,14 +585,14 @@ Right strip the text contained in ``el``.
 >>> e = doc.find("d").find("e")
 >>> f = e.find("f")
 >>> el, text_or_tail = xmlhelper.goto_next_char(f, xmlhelper.TEXT, 1, e)
->>> (el, text_or_tail)
-(None, None)
+>>> (el.tag, text_or_tail)
+('f', 2)
 >>> doc = et.fromstring("<a><b/><c/><d><e><f></f>x</e>y</d></a>")
 >>> d = doc.find("d")
 >>> f = d.find("e").find("f")
 >>> el, text_or_tail = xmlhelper.goto_next_char(f, xmlhelper.TEXT, 1, d)
 >>> (el.tag, text_or_tail)
-('e', 2)
+('f', 2)
 >>> doc = et.fromstring("<a>x<b/></a>")
 >>> b = doc.find("b")
 >>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, b)  # doctest: +IGNORE_EXCEPTION_DETAIL
@@ -601,6 +601,14 @@ Traceback (most recent call last):
 XMLHelperError: Element <a> not in container <b>.
 >>> doc = et.fromstring("<a>x<b>z</b>y</a>")
 >>> el, text_or_tail = xmlhelper.goto_next_char(doc, xmlhelper.TEXT, 1, doc, ["b"])
+>>> (el.tag, text_or_tail)
+('b', 2)
+>>> doc = et.fromstring("<a>abcde<b>defgh</b>ij</a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc[0], xmlhelper.TEXT, 4, doc)
+>>> (el.tag, text_or_tail)
+('b', 1)
+>>> doc = et.fromstring("<a>abcde<b>defgh</b>ij</a>")
+>>> el, text_or_tail = xmlhelper.goto_next_char(doc[0], xmlhelper.TEXT, 5, doc)
 >>> (el.tag, text_or_tail)
 ('b', 2)
 

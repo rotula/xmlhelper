@@ -2,6 +2,12 @@
 Changelog for XMLservices
 *************************
 
+0.22.2
+======
+
+Bugfix: ``goto_next_char`` did not correctly reset character
+position when moving from text to tail.
+
 0.22.1
 ======
 

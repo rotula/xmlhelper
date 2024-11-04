@@ -17,7 +17,7 @@ import unittest
 from lxml import etree as et
 from lxml.doctestcompare import LXMLOutputChecker
 
-__version__ = "0.22.1"
+__version__ = "0.22.2"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -1036,6 +1036,7 @@ def goto_next_char(el, text_or_tail, pos, container, skip_els=[]):
                                                     0, el, skip_els)
             if not newel is None:
                 return newel, newtext_or_tail
+        pos = 0
     # now we must go on with the tail of this element
     # first check container
     if container == el:
