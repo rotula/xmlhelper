@@ -8,6 +8,8 @@ TODO
 - Documentation: switched from epydoc to Sphinx, now we need to fine
   tune it.
 
+- Modernize project layout: toml file, ...
+
 - insert_at() does not give a useful error message, when you try to
   insert something at an index position greater than the respective
   string length. But it returns a defined error value which might be
