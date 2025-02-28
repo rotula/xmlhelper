@@ -17,7 +17,7 @@ import unittest
 from lxml import etree as et
 from lxml.doctestcompare import LXMLOutputChecker
 
-__version__ = "0.22.2"
+__version__ = "0.22.3"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
@@ -59,6 +59,7 @@ ns = {
     "ical": "http://www.w3.org/2002/12/cal/ical#",
     "kml": "http://www.opengis.net/kml/2.2",
     "m": "http://www.w3.org/1998/Math/MathML",
+    "marc": "http://www.loc.gov/MARC21/slim",
     "mets": "http://www.loc.gov/METS/",
     "mgh": "http://www.mgh.de/ns/mgh/",
     "mix": "http://www.loc.gov/mix/v10",

@@ -2,6 +2,11 @@
 Changelog for XMLservices
 *************************
 
+0.22.3
+======
+
+Added namespace for MARC21-XML to namespace dict.
+
 0.22.2
 ======
 
