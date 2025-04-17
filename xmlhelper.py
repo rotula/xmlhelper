@@ -151,7 +151,7 @@ class PrecedingIterator(object):
     Hopefully, this is somewhat faster than repeatedly calling the
     equivalent xpaths.
     """
-    
+
     def __init__(self, element):
         """
         Initialize iterator
@@ -226,7 +226,7 @@ class AllChildNodesIterator(object):
     def __iter__(self):
         """Return the iterator (self)"""
         return self
-    
+
     def __next__(self):
         return self.next()  # pragma: no cover
 
@@ -240,6 +240,61 @@ class AllChildNodesIterator(object):
             self.current_node = TextNode(
                 self.current_node.tail, self.element, self.current_node)
         return ret
+
+
+class PrecedingNodesIterator(object):
+    """Iterator over all preceding nodes (including TextNodes)"""
+
+    b_done = False
+    start_node = None
+    current_node = None
+
+    def __init__(self, node):
+        self.start_node = node
+        self.current_node = node
+ 
+    def __iter__(self):
+        return self
+
+    def __next__(self):  # pragma: no cover
+        return self.next()
+
+    def _get_deepest_right(self, element):
+        if len(element):
+            return TextNode(element[-1].tail, element, element[-1])
+        else:
+            return TextNode(element.text, element)
+
+    def _get_previous_node(self, node):
+        prv = node.getprevious()
+        if prv is None:
+            if isinstance(node, et._Element):
+                parent = node.getparent()
+                if parent is None:
+                    return None
+                else:
+                    return TextNode(parent.text, parent)
+            else:
+                return node.getparent()
+        else:
+            if isinstance(node, et._Element):
+                return TextNode(prv.tail, prv.getparent(), prv)
+            else:
+                return self._get_deepest_right(prv)
+
+    def next(self):
+        if self.b_done:
+            raise StopIteration
+        node = self.current_node
+        while 1:
+            node = self._get_previous_node(node)
+            if node is None:
+                break
+            if not contains(node, self.start_node):
+                self.current_node = node
+                return node
+        self.b_done = True
+        raise StopIteration
 
 class FollowingNodesIterator(object):
     """Iterator over all following nodes (including TextNodes)"""
@@ -313,7 +368,7 @@ class TextNode(object):
 
     def getparent(self):
         return self.parent
-    
+
     def getprevious(self):
         return self.previous
 
@@ -333,7 +388,7 @@ class TextNode(object):
         return (self.text == other.text
                 and self.parent == other.parent
                 and self.previous == other.previous)
-    
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
@@ -464,7 +519,7 @@ class Transformer(object):
         xmlid = element.get("{%s}id" % ns["xml"])
         if xmlid is not None:
             self._ids[xmlid] = element
-    
+
     def get_element_by_id(self, xmlid):
         """Return element with given ID"""
         ret = self._ids.get(xmlid)
@@ -826,7 +881,7 @@ class Indenter(object):
 class XMLTestCase(unittest.TestCase):
 
     def runTest(self):
-        pass
+        pass  # pragma: no cover
 
     def assertXmlEqual(self, got, want):
         if isinstance(got, (et._Element, et._ElementTree)):
@@ -895,8 +950,8 @@ def goto(el, pos, skip_els=[]):
     realcnt = -1
     waitforit = None
     if pos == 0:
-        # waitforit = (t_struct[0][0], TEXT, 0) 
-        waitforit = (next(t_struct)[0], TEXT, 0) 
+        # waitforit = (t_struct[0][0], TEXT, 0)
+        waitforit = (next(t_struct)[0], TEXT, 0)
     for t in t_struct:
         length = len(t[2])
         if length > 0:
@@ -910,7 +965,7 @@ def goto(el, pos, skip_els=[]):
         return waitforit
     else:
         return (None, None, realcnt + 1)
-        
+
 def get_t_struct(el, skip_els=[]):
     """Generate list of text parts contained in ``el`` in document order.
 
@@ -926,8 +981,8 @@ def get_t_struct(el, skip_els=[]):
     t_struct = [(el, TEXT, txt)]
     yield (el, TEXT, txt)
     for subel in el:
-        if (not subel.tag in skip_els and not b_skip_all and 
-           not subel.tag == et.ProcessingInstruction and 
+        if (not subel.tag in skip_els and not b_skip_all and
+           not subel.tag == et.ProcessingInstruction and
            not subel.tag == et.Comment):
             for ts in get_t_struct(subel, skip_els):
                 yield ts
@@ -1068,15 +1123,6 @@ def goto_next_char(el, text_or_tail, pos, container, skip_els=[]):
     newel, newtext_or_tail = goto_next_char(parent, TAIL, 0,
                                             container, skip_els)
     if newel is not None:
-        # need to check, if there is really text
-        if newtext_or_tail == TEXT:
-            txt = newel.text or ""
-        else:
-            txt = newel.tail or ""
-        # if txt == "":
-        #     # NB: This cannot happen.
-        #     return None, None
-        # else:
         return newel, newtext_or_tail
     return None, None
 
@@ -1109,7 +1155,7 @@ def remove_tags(el):
     idx = parent.index(el)
     if idx == 0:
         txt = parent.text or ""
-        parent.text = "%s%s" % (txt, el.text or "") 
+        parent.text = "%s%s" % (txt, el.text or "")
     else:
         tail = parent[idx - 1].tail or ""
         parent[idx - 1].tail = "%s%s" % (tail, el.text or "")
@@ -1119,7 +1165,7 @@ def remove_tags(el):
     tail = el.tail or ""
     if idx == 0:
         txt = parent.text or ""
-        parent.text = "%s%s" % (txt, el.tail or "") 
+        parent.text = "%s%s" % (txt, el.tail or "")
     else:
         tail = parent[idx - 1].tail or ""
         parent[idx - 1].tail = "%s%s" % (tail, el.tail or "")
@@ -1280,7 +1326,7 @@ def move_element(src, target):
         target.set(att, src.get(att))
     # remove src
     delete(src)
-    
+
 def move_element_to_pos(src, target, text_or_tail, pos):
     """
     Move element ``src`` to the given target position.
@@ -1351,7 +1397,7 @@ def collect(new_el, target_els):
                               t.tag)
     t = cut_element(t)
     new_el.append(t)
-    
+
 def span(start, end=None):
     """
     Wrap an element ``span`` around ``start`` and ``end``.

@@ -10,7 +10,7 @@ def run():
     """Run tests"""
     verbose = False
     if "-v" in sys.argv:
-        verbose = True
+        verbose = True  # pragma: no cover
     doctest.testfile("test/test_xmlhelper.txt", verbose=verbose)
 
 if __name__ == "__main__":

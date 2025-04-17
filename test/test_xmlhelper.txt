@@ -1282,7 +1282,34 @@ Traceback (most recent call last):
 ...
 StopIteration
 
-36. ``Transformer``
+36. Iterate over preceding nodes (including text nodes)
+=======================================================
+
+>>> doc = et.fromstring("<p><a>H<b>ul</b></a>l<hi>o</hi><wrap><s/></wrap>.</p>")
+>>> s = doc.find("wrap/s")
+>>> pni = xmlhelper.PrecedingNodesIterator(s)
+>>> for n in pni:
+...     if isinstance(n, xmlhelper.TextNode):
+...         bprint(n.text)
+...     else:
+...         bprint("<" + n.tag + ">")
+<BLANKLINE>
+<BLANKLINE>
+o
+<hi>
+l
+<BLANKLINE>
+ul
+<b>
+H
+<a>
+<BLANKLINE>
+>>> next(pni)
+Traceback (most recent call last):
+...
+StopIteration
+
+37. ``Transformer``
 ===================
 
 A simple transfomation framework is also available.
@@ -1439,7 +1466,7 @@ without effort using the document iterator provided by ``lxml``:
 >>> bprint(u"".join(ret))
 xxxzzz
 
-37. Convenience methods
+38. Convenience methods
 =======================
 
 Whenever the Transformer encounters an element it first tries to find a method
@@ -1481,7 +1508,7 @@ called. This is a rare case, but still needs to be remembered.
 >>> bprint(et.tostring(m.transform()))
 <doc xmlns="https://example.com/ns/"><new/></doc>
 
-38. Helpers with writing Transformers
+39. Helpers with writing Transformers
 =====================================
 
 Append to lists or elements
@@ -1606,7 +1633,7 @@ Traceback (most recent call last):
 ...
 TransformerNotFoundError: ID xxx not found.
 
-39. contains(el1, el2)
+40. contains(el1, el2)
 ======================
 
 >>> doc = et.fromstring("<doc><a><b><c/></b></a><d/></doc>")
@@ -1621,7 +1648,7 @@ True
 >>> xmlhelper.contains(a, d)
 False
 
-40. Switch elements
+41. Switch elements
 ===================
 
 >>> doc = et.fromstring("<doc>x<a/>y<b/>z</doc>")
@@ -1673,14 +1700,14 @@ If you want to switch an element with itself, nothing happens:
 >>> a = doc.find("a")
 >>> xmlhelper.switch(a, a)
 
-41. Strip namespace part from tagname
+42. Strip namespace part from tagname
 =====================================
 
 >>> tagname = "{http://namespace/}tag"
 >>> bprint(xmlhelper.strip_namespace_from_tagname(tagname))
 tag
 
-42. XMLTestCase: unittests with ``assertXmlEqual``
+43. XMLTestCase: unittests with ``assertXmlEqual``
 ==================================================
 
 In order to write Unit Tests that have to assert the equality of
@@ -1694,5 +1721,11 @@ XML documents you need a special method provided by the ``LXMLOutputChecker``.
 You can either supply XML Elements or ElementTrees or just strings.
 
 >>> tc.assertXmlEqual("<doc a=\"1\" b=\"2\"/>", "<doc b=\"2\" a=\"1\"/>")
+
+>>> doc3 = et.fromstring("<doc b=\"@@@@@@@\" a=\"1\"/>")
+>>> tc.assertXmlEqual(doc2, doc3)  # doctest: +IGNORE_EXCEPTION_DETAIL
+Traceback (most recent call last):
+...
+AssertionError
 
 .. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:
