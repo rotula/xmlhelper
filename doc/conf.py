@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'xmlhelper'
-copyright = '2024, Clemens Radl'
+copyright = '2025, Clemens Radl'
 author = 'Clemens Radl'
 
 # -- General configuration ---------------------------------------------------

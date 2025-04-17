@@ -17,7 +17,7 @@ Taken from
 ...         s = s.decode()
 ...     print(s)
 >>> xmlhelper.__version__
-'0.22.3'
+'0.23.0'
 
 2. get_text(el, skip_els, repl)
 ===============================

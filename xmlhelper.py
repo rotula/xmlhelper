@@ -17,7 +17,7 @@ import unittest
 from lxml import etree as et
 from lxml.doctestcompare import LXMLOutputChecker
 
-__version__ = "0.22.3"
+__version__ = "0.23.0"
 __author__ = "Clemens Radl <clemens.radl@googlemail.com>"
 
 TEXT = 1
