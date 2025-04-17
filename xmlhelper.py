@@ -609,7 +609,7 @@ class Transformer(object):
         will fork depending on the element and its position in
         the original tree.
 
-        The default is to just call the default transformtion,
+        The default is to just call the default transformation,
         which basically produces a copy of the element.
         """
         convenience_method = self._find_default_method(element)
