@@ -5,8 +5,10 @@ TODO
 - Deal with comments and processing instructions. This is only partly
   done by now. ``count_characters`` and ``get_text`` work correctly.
 
-- Documentation: So far you can create an HTML documentation with
-  epydoc.
+- Documentation: switched from epydoc to Sphinx, now we need to fine
+  tune it.
+
+- Modernize project layout: toml file, ...
 
 - insert_at() does not give a useful error message, when you try to
   insert something at an index position greater than the respective
