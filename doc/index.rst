@@ -15,7 +15,9 @@ documentation for details.
    :maxdepth: 2
 
    README <README>
+   TODO <TODO>
    CHANGES <CHANGES>
    Module documentation <xmlhelper>
    Doctests <doctests>
+   Development <development>
 

@@ -24,4 +24,3 @@ TODO
   child element). NB: This is probably done by the
   ``Transformer._append_to`` method.
 
-.. vim: set fenc=UTF-8 tw=72 comments+=fb\:..:
